@@ -1,0 +1,9 @@
+[submodule "CICADA"]
+	path = CICADA
+	url = git@github.com:cms-hls4ml/CICADA.git
+[submodule "anomalyTriggerSkunkworks"]
+	path = anomalyTriggerSkunkworks
+	url = git@github.com:aloeliger/anomalyTriggerSkunkworks.git
+[submodule "miniCICADA"]
+	path = miniCICADA
+	url = git@github.com:aloeliger/miniCICADA.git
