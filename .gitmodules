@@ -7,3 +7,6 @@
 [submodule "miniCICADA"]
 	path = miniCICADA
 	url = git@github.com:aloeliger/miniCICADA.git
+[submodule "hls4mlEmulatorExtras"]
+	path = hls4mlEmulatorExtras
+	url = git@github.com:cms-hls4ml/hls4mlEmulatorExtras.git
