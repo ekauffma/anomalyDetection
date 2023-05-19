@@ -2,7 +2,7 @@
 VERSION=1
 RUNS=('A' 'B' 'C' 'D')
 
-for i in "${runs[@]}"; do
+for i in "${RUNS[@]}"; do
 
     NFS_LOCATION="/nfs_scratch/aloeliger/Ztoee_wminiCICADA/v_${VERSION}/Run${i}/"
     DAGS_LOCATION="${NFS_LOCATION}/dags/"
