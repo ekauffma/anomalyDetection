@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-VERSION=1
+VERSION=2
 RUNS=('A' 'B' 'C' 'D')
 
 for i in "${RUNS[@]}"; do

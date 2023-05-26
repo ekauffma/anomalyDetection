@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-VERSION=1
+VERSION=2
 
 NFS_LOCATION="/nfs_scratch/aloeliger/Ztoee_wminiCICADA/v_${VERSION}/test/"
 DAGS_LOCATION="${NFS_LOCATION}/dags/"

@@ -75,11 +75,13 @@ process.load('anomalyDetection.ZtoeePeakAnalysis.electronInformationAnalyzer_cfi
 process.analysisSequence = cms.Sequence(
     process.basicEventInfoAnalyzer + 
     process.miniCICADAAnalyzer + 
+    process.miniCICADAAnalyzerCICADAv1 +
     process.electronInformationAnalyzer
 )
 
 process.productionTasks = cms.Task(
-    process.miniCICADAProducer
+    process.miniCICADAProducer,
+    process.miniCICADAProducerCICADAv1
 )
 
 
