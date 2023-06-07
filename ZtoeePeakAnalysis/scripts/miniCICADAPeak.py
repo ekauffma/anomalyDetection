@@ -42,7 +42,7 @@ def processSample(sampleName: str, theSample):
 
     cicadaStep=0.5
     cicadaMin = 0.0
-    cicadaMax = 50.0
+    cicadaMax = 10.0
     cicadaSteps = math.ceil((cicadaMax-cicadaMin)/cicadaStep)
 
     cicadaThresholds = [cicadaStep * x for x in range(cicadaSteps+1)]
@@ -70,7 +70,6 @@ def processSample(sampleName: str, theSample):
     # for entryNum in prange:
         # prange.set_postfix_str(f'2e: {int(twoElectronEvents)}:{twoElectronEvents/numEntries:.2%}, 2ge: {int(twoGoodElectronEvents)}:{twoGoodElectronEvents/numEntries:.2%}')
         theSample.GetEntry(entryNum)
-
         if hasTwoElectrons(theSample.ElectronInformation):
             twoElectronEvents += 1.0
             electronOneVector = ROOT.TLorentzVector()

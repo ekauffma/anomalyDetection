@@ -109,7 +109,7 @@ if __name__ == '__main__':
 
     cicadaStep=0.5
     cicadaMin = 0.0
-    cicadaMax = 50.0
+    cicadaMax = 10.0
     cicadaSteps = math.ceil((cicadaMax-cicadaMin)/cicadaStep)
 
     cicadaThresholds = [cicadaStep * x for x in range(cicadaSteps+1)]

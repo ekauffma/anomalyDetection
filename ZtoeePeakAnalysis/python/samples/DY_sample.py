@@ -2,12 +2,13 @@
 from .sample import sample
 import os
 
-hdfsPath = "/hdfs/store/user/aloeliger/Ztoee_wminiCICADA/v_1/DY/"
+hdfsPath = "/hdfs/store/user/aloeliger/Ztoee_wminiCICADA/v_2/DY/"
 
 theFiles = []
 chains = [
     'basicEventInfoAnalyzer/basicInfo',
-    'miniCICADAAnalyzer/miniCICADAScoreTree',
+    #'miniCICADAAnalyzer/miniCICADAScoreTree',
+    'miniCICADAAnalyzerCICADAv1/miniCICADAScoreTree',
     'electronInformationAnalyzer/ElectronInformation'
 ]
 
