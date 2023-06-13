@@ -80,8 +80,8 @@ process.options = cms.untracked.PSet(
     makeTriggerResults = cms.obsolete.untracked.bool,
     numberOfConcurrentLuminosityBlocks = cms.untracked.uint32(0),
     numberOfConcurrentRuns = cms.untracked.uint32(1),
-    numberOfStreams = cms.untracked.uint32(1),
-    numberOfThreads = cms.untracked.uint32(1),
+    numberOfStreams = cms.untracked.uint32(4),
+    numberOfThreads = cms.untracked.uint32(4),
     printDependencies = cms.untracked.bool(False),
     sizeOfStackForThreadsInKB = cms.optional.untracked.uint32,
     throwIfIllegalParameter = cms.untracked.bool(True),
@@ -94,8 +94,16 @@ from Configuration.AlCa.GlobalTag import GlobalTag
 process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:run2_data', '')
 
 # Path and EndPath definitions
+process.endOfJobOut = cms.OutputModule(
+    "PoolOutputModule",
+    outputCommands = cms.untracked.vstring('keep *'),
+    fileName = cms.untracked.string("file:./TestOut.root"),
+)
+
+
 process.raw2digi_step = cms.Path(process.RawToDigi)
-process.endjob_step = cms.EndPath(process.endOfProcess)
+#process.endjob_step = cms.EndPath(process.endOfProcess)
+process.endjob_step = cms.EndPath(process.endOfJobOut)
 
 # Schedule definition
 process.schedule = cms.Schedule(process.raw2digi_step, process.endjob_step)
