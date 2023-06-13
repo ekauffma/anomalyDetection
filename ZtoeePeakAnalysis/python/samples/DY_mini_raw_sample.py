@@ -2,7 +2,7 @@
 from .sample import sample
 import os
 
-hdfsPath = '/hdfs/store/user/aloelige/ZeroBias/CICADA_Ztoee_wMINIAOD_RAW_19May2023/'
+hdfsPath = '/hdfs/store/user/aloelige/DYJetsToLL_M-50_TuneCP5_13TeV-amcatnloFXFX-pythia8/CICADA_Ztoee_wMINIAOD_RAW_DY_19May2023/'
 
 theFiles = []
 chains = [
