@@ -96,6 +96,7 @@ def processSample(sampleName: str, theSample):
             for threshold in cicadaThresholds:
                 if theSample.chain.anomalyScore >= threshold:
                     cicadaPlotDict[threshold].Fill(invMass, theSample.GetWeight())
+
     theFile = ROOT.TFile(f'{sampleName}_miniCICADAPeak.root','RECREATE')
     twoElectronHist.Write()
     twoElectronWCutHist.Write()
@@ -103,7 +104,6 @@ def processSample(sampleName: str, theSample):
         plot.Write()
     theFile.Write()
     theFile.Close()
-    print("Done!")
 
 def main():
     samples = {
