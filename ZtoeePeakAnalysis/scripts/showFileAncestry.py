@@ -3,6 +3,28 @@
 import subprocess
 import argparse
 
+def getFileOnDisk(fileName: str):
+    dasQuery = f'dasgoclient --query=\"site file={fileName}\"'
+    queryProcess = subprocess.run(
+        [dasQuery],
+        shell=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=True,
+    )
+
+    resultString = queryProcess.stdout.decode()
+
+    sites = resultString.split('\n')
+    sites.remove('')
+
+    isOnDisk = False
+    for site in sites:
+        if 'tape' not in site.lower():
+            isOnDisk = True
+            break
+    return isOnDisk
+
 def getListOfAncestors(fileName: str):
     dasQuery = f"dasgoclient --query=\"parent file={fileName}\""
     queryProcess = subprocess.run(
@@ -25,7 +47,12 @@ def printAncestors(fileName: str, indentationLevel: int = 1):
     if theAncestors == []: #we're done here
         return
     for ancestor in theAncestors:
-        printStr = indentationLevel*"\t"+f"\u2192 {ancestor}"
+        ancestorOnDisk = getFileOnDisk(ancestor)
+        if ancestorOnDisk:
+            onDiskStr = 'On Disk'
+        else:
+            onDiskStr = 'Not On Disk'
+        printStr = indentationLevel*"\t"+f"\u2192 {ancestor}, On Disk?: {onDiskStr}"
         print(printStr)
         printAncestors(ancestor, indentationLevel+1)
 
