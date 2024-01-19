@@ -46,10 +46,10 @@ process.source = cms.Source("PoolSource",
 )
 
 process.options = cms.untracked.PSet(
-    FailPath = cms.untracked.vstring(),
+    # FailPath = cms.untracked.vstring(),
     IgnoreCompletely = cms.untracked.vstring(),
     Rethrow = cms.untracked.vstring(),
-    SkipEvent = cms.untracked.vstring(),
+    # SkipEvent = cms.untracked.vstring(),
     allowUnscheduled = cms.obsolete.untracked.bool,
     canDeleteEarly = cms.untracked.vstring(),
     deleteNonConsumedUnscheduledModules = cms.untracked.bool(True),
@@ -105,25 +105,25 @@ process.schedule.append(process.productionPath)
 
 from anomalyDetection.anomalyTriggerSkunkworks.L1TCaloSummaryTestNtuplizer_cfi import L1TCaloSummaryTestNtuplizer
 process.CICADAv1p1p1Ntuplizer = L1TCaloSummaryTestNtuplizer.clone(
-    scoreSource = cms.InputTag("L1TCaloSummaryCICADAv1p1p1", "anomalyScore"),
+    scoreSource = cms.InputTag("L1TCaloSummaryCICADAv1p1p1", "CICADAScore"),
     ecalToken = cms.InputTag('simEcalTriggerPrimitiveDigis'),
     hcalToken = cms.InputTag('simHcalTriggerPrimitiveDigis'),
     includePUInfo = cms.bool(False),   
 )
 process.CICADAv2p1p1Ntuplizer = L1TCaloSummaryTestNtuplizer.clone(
-    scoreSource = cms.InputTag("L1TCaloSummaryCICADAv2p1p1", "anomalyScore"),
+    scoreSource = cms.InputTag("L1TCaloSummaryCICADAv2p1p1", "CICADAScore"),
     ecalToken = cms.InputTag('simEcalTriggerPrimitiveDigis'),
     hcalToken = cms.InputTag('simHcalTriggerPrimitiveDigis'),
     includePUInfo = cms.bool(False),   
 )
 process.CICADAv1p1p2Ntuplizer = L1TCaloSummaryTestNtuplizer.clone(
-    scoreSource = cms.InputTag("L1TCaloSummaryCICADAv1p1p2", "anomalyScore"),
+    scoreSource = cms.InputTag("L1TCaloSummaryCICADAv1p1p2", "CICADAScore"),
     ecalToken = cms.InputTag('simEcalTriggerPrimitiveDigis'),
     hcalToken = cms.InputTag('simHcalTriggerPrimitiveDigis'),
     includePUInfo = cms.bool(False),   
 )
 process.CICADAv2p1p2Ntuplizer = L1TCaloSummaryTestNtuplizer.clone(
-    scoreSource = cms.InputTag("L1TCaloSummaryCICADAv2p1p2", "anomalyScore"),
+    scoreSource = cms.InputTag("L1TCaloSummaryCICADAv2p1p2", "CICADAScore"),
     ecalToken = cms.InputTag('simEcalTriggerPrimitiveDigis'),
     hcalToken = cms.InputTag('simHcalTriggerPrimitiveDigis'),
     includePUInfo = cms.bool(False),   
