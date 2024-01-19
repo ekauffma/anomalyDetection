@@ -14,8 +14,7 @@ git cms-addpkg L1Trigger/L1TCaloLayer1
 git cms-rebase-topic aloeliger:CICADA_Paper_Mods_14_0_0_pre2
 
 #Get this repository
-git clone --recursive git@github.com:aloeliger/anomalyDetection.git
-
+git clone --recursive https://github.com/aloeliger/anomalyDetection.git
 #Now we need to get CICADA firmware models for the emulator and some of the things we use for that
 cd anomalyDetection/
 #need to get the xilinx ap_types repo, but need it to be called "hls" for CMSSW reasons
