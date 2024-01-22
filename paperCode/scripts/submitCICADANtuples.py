@@ -77,7 +77,9 @@ def makeCondorSubmission(
         basePath:str, 
         progress:Progress,
         finalShellFileName:str,
-        finalShellFile
+        finalShellFile,
+        runRange=None,
+        isData = False,
 )->None:
     dagLocation = f'{basePath}/dags/'
     os.makedirs(dagLocation, exist_ok=True)
@@ -123,7 +125,9 @@ def makeCrabSubmission(
         basePath: str,
         progress:Progress,
         finalShellFileName:str,
-        finalShellFile
+        finalShellFile,
+        runRange=None,
+        isData=False,
 ):
     os.makedirs(basePath, exist_ok=True)
     pythonConfigName = f"{basePath}/submit.py"
@@ -141,6 +145,8 @@ def makeCrabSubmission(
     configContents+=f'config.JobType.pluginName = \'Analysis\'\n'
     configLocation = f'{os.environ["CMSSW_BASE"]}/src/anomalyDetection/paperCode/python/makeCICADANtuplesFromRAW.py'
     configContents+=f'config.JobType.psetName = \'{configLocation}\'\n'
+    if isData==True:
+        configContents += f'config.JobType.pyCfgParams=[\'isData=True\']\n'
     configContents+='config.JobType.maxMemoryMB = 4000\n'
     CICADALocation = f'{os.environ["CMSSW_BASE"]}/src/anomalyDetection/CICADA'
     configContents+=f'config.JobType.inputFiles=[\'{CICADALocation}\']\n\n'
@@ -151,6 +157,8 @@ def makeCrabSubmission(
     configContents+=f'config.Data.inputDataset=\'{fullSampleName}\'\n'
     configContents+='config.Data.inputDBS = \'global\'\n'
     configContents+='config.Data.splitting = \'Automatic\'\n'
+    if runRange != None:
+        configContents += f'config.Data.runRange = \'{runRange}\'\n'
     configContents+='config.Data.publication = False\n'
     configContents+=f'config.Data.outputDatasetTag = \'{jobName}\'\n\n'
 
@@ -225,7 +233,9 @@ def main(args) -> None:
                     basePath, 
                     progress,
                     finalShellFileName,
-                    finalShellFile
+                    finalShellFile,
+                    args.runRange,
+                    args.isData
                 )
             elif args.crab:
                 makeCrabSubmission(
@@ -236,7 +246,9 @@ def main(args) -> None:
                     basePath, 
                     progress,
                     finalShellFileName,
-                    finalShellFile
+                    finalShellFile,
+                    args.runRange,
+                    args.isData,
                 )
 
             progress.update(submissionTask, advance=1.0)
@@ -244,6 +256,7 @@ def main(args) -> None:
     console.print(f"Done! Run the shell file {finalShellFileName} to complete the submission!")
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Submit condor Ntuples for paper Ntuples")
+    
     input_group = parser.add_mutually_exclusive_group(required=True)
     input_group.add_argument(
         '--listOfSamples',
@@ -253,6 +266,7 @@ if __name__ == '__main__':
         '--fileList',
         nargs='?'
     )
+
     cluster_group = parser.add_mutually_exclusive_group(required=True)
     cluster_group.add_argument(
         '--condor',
@@ -261,6 +275,20 @@ if __name__ == '__main__':
     cluster_group.add_argument(
         '--crab',
         action='store_true'
+    )
+
+    parser.add_argument(
+        '-d',
+        '--isData',
+        action='store_true',
+        help='Pass to the configuration appropriate data flags',
+    )
+
+    parser.add_argument(
+        '--runRange',
+        help='A string to specify the runs to run',
+        type=str,
+        nargs='?'
     )
 
     args = parser.parse_args()
