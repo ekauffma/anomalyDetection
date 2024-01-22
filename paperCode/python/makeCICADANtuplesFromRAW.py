@@ -75,7 +75,10 @@ process.options = cms.untracked.PSet(
 )
 
 from Configuration.AlCa.GlobalTag import GlobalTag
-process.GlobalTag = GlobalTag(process.GlobalTag, '130X_mcRun3_2023_realistic_postBPix_v2', '')
+if options.isData:
+    process.GlobalTag = GlobalTag(process.GlobalTag, '130X_dataRun3_Prompt_v4', '')
+else:
+    process.GlobalTag = GlobalTag(process.GlobalTag, '130X_mcRun3_2023_realistic_postBPix_v2', '')
 
 process.raw2digi_step = cms.Path(process.RawToDigi)
 process.endjob_step = cms.EndPath(process.endOfProcess)
