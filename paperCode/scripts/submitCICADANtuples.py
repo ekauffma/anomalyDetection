@@ -12,6 +12,27 @@ import random
 
 console = Console()
 
+class submissionSettings():
+    def __init__(
+            self,
+            identity: str,
+            jobName: str,
+            fullSampleName: str,
+            sampleName:str, 
+            basePath:str, 
+            progress:Progress,
+            finalShellFileName:str,
+            finalShellFile,
+    ):
+        self.identity = identity
+        self.jobName = jobName
+        self.fullSampleName = fullSampleName
+        self.sampleName = sampleName
+        self.basePath = basePath
+        self.progress = progress
+        self.finalShellFileName = finalShellFileName
+        self.finalShellFile = finalShellFile
+
 def parseFileList(fileName: str) -> list[str]:
     with open(fileName, 'r') as theFile:
         fileContents = theFile.read()
@@ -70,25 +91,18 @@ def getListOfFiles(fullSampleName: str) -> list[str]:
     return allFiles
 
 def makeCondorSubmission(
-        identity: str,
-        jobName: str,
-        fullSampleName: str,
-        sampleName:str, 
-        basePath:str, 
-        progress:Progress,
-        finalShellFileName:str,
-        finalShellFile,
+        theSettings:submissionSettings,
         runRange=None,
         isData = False,
 )->None:
-    dagLocation = f'{basePath}/dags/'
+    dagLocation = f'{theSettings.basePath}/dags/'
     os.makedirs(dagLocation, exist_ok=True)
-    submitLocation = f'{basePath}/submit/'
-    outputDir = f'/store/user/{identity}/{jobName}/{sampleName}'
+    submitLocation = f'{theSettings.basePath}/submit/'
+    outputDir = f'/store/user/{theSettings.identity}/{theSettings.jobName}/{theSettings.sampleName}'
 
     # Let's get a list of the valid files
-    validFiles = getListOfFiles(fullSampleName)
-    validFilesFile = f'{basePath}/{sampleName}_Files.txt'
+    validFiles = getListOfFiles(theSettings.fullSampleName)
+    validFilesFile = f'{theSettings.basePath}/{theSettings.sampleName}_Files.txt'
     with open(validFilesFile, 'w') as theFile:
         theFile.write('\n'.join(validFiles))
     del validFiles
@@ -104,7 +118,7 @@ def makeCondorSubmission(
         "--use-singularity CentOS7 \\",
         '--memory-requirements=4000 \\',
         f'--input-file-list={validFilesFile} \\',
-        f'{jobName} \\',
+        f'{theSettings.jobName} \\',
         f'{os.environ["CMSSW_BASE"]} \\',
         f'{os.environ["CMSSW_BASE"]}//src/anomalyDetection/paperCode/python/makeCICADANtuplesFromRAW.py \\',
         "\'outputFile=$outputFileName\' \\",
@@ -112,25 +126,18 @@ def makeCondorSubmission(
     ]
 
     farmout_command = '\n'.join(farmout_command)
-    shell_command = f'# {sampleName}\n{farmout_command}\n\n'
+    shell_command = f'# {theSettings.sampleName}\n{farmout_command}\n\n'
     shell_syntax = Syntax(shell_command, "bash")
-    progress.console.log(shell_syntax)
-    finalShellFile.write(shell_command)
+    theSettings.progress.console.log(shell_syntax)
+    theSettings.finalShellFile.write(shell_command)
 
 def makeCrabSubmission(
-        identity: str,
-        jobName: str,
-        fullSampleName: str,
-        sampleName: str,
-        basePath: str,
-        progress:Progress,
-        finalShellFileName:str,
-        finalShellFile,
+        theSettings:submissionSettings,
         runRange=None,
         isData=False,
 ):
-    os.makedirs(basePath, exist_ok=True)
-    pythonConfigName = f"{basePath}/submit.py"
+    os.makedirs(theSettings.basePath, exist_ok=True)
+    pythonConfigName = f"{theSettings.basePath}/submit.py"
     crabPythonConfig = open(pythonConfigName, "w")
 
     configContents = ""
@@ -138,8 +145,8 @@ def makeCrabSubmission(
     configContents+="from CRABClient.UserUtilities import config\nimport os\nimport datetime\n\n"
     configContents+="config = config()\n"
 
-    configContents+=f"config.General.requestName = '{jobName}'\n"
-    configContents+=f'config.General.workArea = \'{basePath}/crab\'\n'
+    configContents+=f"config.General.requestName = '{theSettings.jobName}'\n"
+    configContents+=f'config.General.workArea = \'{theSettings.basePath}/crab\'\n'
     configContents+=f'config.General.transferOutputs = True\n\n'
 
     configContents+=f'config.JobType.pluginName = \'Analysis\'\n'
@@ -151,28 +158,29 @@ def makeCrabSubmission(
     CICADALocation = f'{os.environ["CMSSW_BASE"]}/src/anomalyDetection/CICADA'
     configContents+=f'config.JobType.inputFiles=[\'{CICADALocation}\']\n\n'
 
-    splitSampleName = fullSampleName.split('/')
+    splitSampleName = theSettings.fullSampleName.split('/')
     splitSampleName.remove('')
 
-    configContents+=f'config.Data.inputDataset=\'{fullSampleName}\'\n'
+    configContents+=f'config.Data.inputDataset=\'{theSettings.fullSampleName}\'\n'
     configContents+='config.Data.inputDBS = \'global\'\n'
-    configContents+='config.Data.splitting = \'Automatic\'\n'
+    configContents+='config.Data.splitting = \'FileBased\'\n'
+    configContents+='config.Data.unitsPerJob = 1\n'
     if runRange != None:
         configContents += f'config.Data.runRange = \'{runRange}\'\n'
     configContents+='config.Data.publication = False\n'
-    configContents+=f'config.Data.outputDatasetTag = \'{jobName}\'\n\n'
+    configContents+=f'config.Data.outputDatasetTag = \'{theSettings.jobName}\'\n\n'
 
     configContents+=f'config.Site.storageSite = \'T2_US_Wisconsin\''
 
-    shell_command = f'# {sampleName}\ncrab submit -c {pythonConfigName}\n'
-    finalShellFile.write(shell_command)
+    shell_command = f'# {theSettings.sampleName}\ncrab submit -c {pythonConfigName}\n'
+    theSettings.finalShellFile.write(shell_command)
 
     config_syntax = Syntax(configContents, "python")
     shell_syntax = Syntax(shell_command, "bash")
 
-    progress.console.print(config_syntax)
-    progress.console.print()
-    progress.console.print(shell_syntax)
+    theSettings.progress.console.print(config_syntax)
+    theSettings.progress.console.print()
+    theSettings.progress.console.print(shell_syntax)
 
     crabPythonConfig.write(configContents)
     crabPythonConfig.close()
@@ -224,29 +232,26 @@ def main(args) -> None:
             progress.console.log('Base path:')
             progress.console.log(basePath)
 
+            theSettings = submissionSettings(
+                identity,
+                jobName,
+                fullSampleName,
+                sampleName, 
+                basePath, 
+                progress,
+                finalShellFileName,
+                finalShellFile,
+            )
+
             if args.condor:
                 makeCondorSubmission(
-                    identity,
-                    jobName,
-                    fullSampleName,
-                    sampleName, 
-                    basePath, 
-                    progress,
-                    finalShellFileName,
-                    finalShellFile,
+                    theSettings,
                     args.runRange,
                     args.isData
                 )
             elif args.crab:
                 makeCrabSubmission(
-                    identity,
-                    jobName,
-                    fullSampleName,
-                    sampleName, 
-                    basePath, 
-                    progress,
-                    finalShellFileName,
-                    finalShellFile,
+                    theSettings,
                     args.runRange,
                     args.isData,
                 )
@@ -289,6 +294,11 @@ if __name__ == '__main__':
         help='A string to specify the runs to run',
         type=str,
         nargs='?'
+    )
+
+    parser.add_argument(
+        '--jobSplitting',
+        help='Job splitting parameter for crab based submissions'
     )
 
     args = parser.parse_args()
