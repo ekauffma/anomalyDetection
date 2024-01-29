@@ -93,11 +93,15 @@ process = L1TReEmulFromRAW(process)
 from L1Trigger.L1TNtuples.customiseL1Ntuple import L1NtupleRAWEMU
 process = L1NtupleRAWEMU(process)
 
+process.load('L1Trigger.L1TCaloLayer1.L1TCaloSummaryCICADAv1p1p0')
+process.load('L1Trigger.L1TCaloLayer1.L1TCaloSummaryCICADAv2p1p0')
 process.load('L1Trigger.L1TCaloLayer1.L1TCaloSummaryCICADAv1p1p1')
 process.load('L1Trigger.L1TCaloLayer1.L1TCaloSummaryCICADAv2p1p1')
 process.load('L1Trigger.L1TCaloLayer1.L1TCaloSummaryCICADAv1p1p2')
 process.load('L1Trigger.L1TCaloLayer1.L1TCaloSummaryCICADAv2p1p2')
 process.productionTask = cms.Task(
+    process.L1TCaloSummaryCICADAv1p1p0,
+    process.L1TCaloSummaryCICADAv2p1p0,
     process.L1TCaloSummaryCICADAv1p1p1,
     process.L1TCaloSummaryCICADAv2p1p1,
     process.L1TCaloSummaryCICADAv1p1p2,
@@ -107,6 +111,18 @@ process.productionPath = cms.Path(process.productionTask)
 process.schedule.append(process.productionPath)
 
 from anomalyDetection.anomalyTriggerSkunkworks.L1TCaloSummaryTestNtuplizer_cfi import L1TCaloSummaryTestNtuplizer
+process.CICADAv1p1p0Ntuplizer = L1TCaloSummaryTestNtuplizer.clone(
+    scoreSource = cms.InputTag("L1TCaloSummaryCICADAv1p1p0", "CICADAScore"),
+    ecalToken = cms.InputTag('simEcalTriggerPrimitiveDigis'),
+    hcalToken = cms.InputTag('simHcalTriggerPrimitiveDigis'),
+    includePUInfo = cms.bool(False),   
+)
+process.CICADAv2p1p0Ntuplizer = L1TCaloSummaryTestNtuplizer.clone(
+    scoreSource = cms.InputTag("L1TCaloSummaryCICADAv2p1p0", "CICADAScore"),
+    ecalToken = cms.InputTag('simEcalTriggerPrimitiveDigis'),
+    hcalToken = cms.InputTag('simHcalTriggerPrimitiveDigis'),
+    includePUInfo = cms.bool(False),   
+)
 process.CICADAv1p1p1Ntuplizer = L1TCaloSummaryTestNtuplizer.clone(
     scoreSource = cms.InputTag("L1TCaloSummaryCICADAv1p1p1", "CICADAScore"),
     ecalToken = cms.InputTag('simEcalTriggerPrimitiveDigis'),
@@ -136,6 +152,8 @@ process.load("anomalyDetection.paperCode.CICADAInputNtuplizer_cfi")
 process.load('anomalyDetection.anomalyTriggerSkunkworks.L1TTriggerBitsNtuplizer_cfi')
 
 process.NtuplePath = cms.Path(
+    process.CICADAv1p1p0Ntuplizer +
+    process.CICADAv2p1p0Ntuplizer +
     process.CICADAv1p1p1Ntuplizer +
     process.CICADAv2p1p1Ntuplizer +
     process.CICADAv1p1p2Ntuplizer +
@@ -145,6 +163,8 @@ process.NtuplePath = cms.Path(
 )
 
 process.schedule.append(process.NtuplePath)
+
+process.TFileService.fileName = cms.string(options.outputFile)
 
 print("schedule:")
 print(process.schedule)
