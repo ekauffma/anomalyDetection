@@ -93,7 +93,7 @@ void kerasCICADAModelNtuplizer::analyze(const edm::Event& iEvent, const edm::Eve
     }
 
   std::vector<tensorflow::Tensor> tensorOutput;
-  tensorflow::run(session, {{"serving_default_inputs:0", modelInput}}, {"StatefulPartitionedCall:0"}, &tensorOutput);
+  tensorflow::run(session, {{"serving_default_inputs_:0", modelInput}}, {"StatefulPartitionedCall:0"}, &tensorOutput);
 
   modelOutput = tensorOutput[0].matrix<float>()(0, 0);
 
