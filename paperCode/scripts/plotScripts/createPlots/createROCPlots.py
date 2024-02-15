@@ -5,9 +5,11 @@ import os
 from anomalyDetection.paperCode.samples.paperSampleBuilder import samples
 from rich.console import Console
 from anomalyDetection.anomalyTriggerSkunkworks.plotSettings.utilities import convertEffToRate, convertRateToEff
+from anomalyDetection.anomalyTriggerSkunkworks.utilities.decorators import cache
 
 console = Console()
 
+@cache
 def getSampleEffForValue(sample, variable, value):
     totalSampleCount = sample.Count()
     thresholdFrame = sample.Filter(f'{variable} >= {value}')
@@ -23,7 +25,7 @@ def getVariableValueForBackgroundEff(background, variable, efficiencyWorkingPoin
 
     variableLowerBound = 0.0
     if variable == 'HT':
-        variableUpperBound = 5000.0
+        variableUpperBound = 600.0
     else:
         variableUpperBound = 256.0
 
@@ -54,17 +56,24 @@ def makeROCCurveFromPoints(points, nameTitle):
     )
     return rocGraph
 
+#We would like to make the data value/efficiency map before-hand
+#this function will make it for a given variable
+def makeDataEfficiencyValues(data, variable, desiredEffs):
+    valueThresholds = []
+    for index, effWorkingPoint in enumerate(desiredEffs):
+        console.log(f'\tEff point: {index:>4d}, {effWorkingPoint:.3e}')
+        variableValue = getVariableValueForBackgroundEff(data, variable, effWorkingPoint)
+        valueThresholds.append(variableValue)
+        console.log(f'\tVariable Value: {variableValue:.2f}')
+    return valueThresholds
+
 # given a sample, make a ROC curve from it
 # Let's start by just with 100 efficiency points between rate 0, and 100 kHz
-def makeROCCurveForVariable(signal, background, sampleName, variable):
-    desiredRates = [ i*1.0 for i in range(101) ]
-    desiredEffs = [ convertRateToEff(x) for x in desiredRates ]
-
-    effPoints = []
-    for efficiencyWorkingPoint in desiredEffs:
+def makeROCCurveForVariable(signal, backgroundValuePerEffs, desiredEffs, sampleName, variable):
+    effPoints = [(0.0,0.0)]
+    for index, efficiencyWorkingPoint in enumerate(desiredEffs):
         # okay, let's figure out what value of the variable gets us the desired eff in the background sample
-        variableValue = getVariableValueForBackgroundEff(background, variable, efficiencyWorkingPoint)
-        signalEff = getSampleEffForValue(signal, variable, variableValue)
+        signalEff = getSampleEffForValue(signal, variable, backgroundValuePerEffs[index])
 
         effPoints.append((efficiencyWorkingPoint, signalEff))
     #okay, now we can build a graph with the working points 
@@ -85,7 +94,7 @@ def main(args):
     #very quickly, let's go ahead and define the HT column for zero bias
     HTFunction = """
     for(int i = 0; i < sumType.size(); ++i){
-       if(sumType.at(i) == 1){
+       if(sumType.at(i) == 1 and sumBx.at(i) == 0){
           return (double) sumEt.at(i);
        }
     }
@@ -106,9 +115,21 @@ def main(args):
         'CICADA_v2p2p0N_score',
         "HT"
     ]
+    desiredRates = [ (i*1.0)+1.0 for i in range(100) ]
+    #desiredRates = [10.0]
+    desiredEffs = [ convertRateToEff(x) for x in desiredRates ]
+
+    # We should do calculations of variable thresholds for values on data
+    # because this takes a long time and we don't want to repeat it.
+    console.log("Calculating values for efficiencies on data:")
+    console.log(desiredEffs)
+    valuePerEffs = {}
+    for variable in scoreNames:
+        console.log(f'Creating cache for: {variable}')
+        valuePerEffs[variable] = makeDataEfficiencyValues(oddLumiZBDataframe, variable, desiredEffs)
+
     allPlots = []
     mcDataframes = []
-
     #now we go over each MC frame, and make a ROC curve with HT on it for it
     with console.status("Making ROCs..."):
         for sampleName in mcSampleNames:
@@ -122,11 +143,14 @@ def main(args):
             # and HT
             #Let's offload this problem
             for variable in scoreNames:
-                allPlots += makeROCCurveForVariable(
-                    theDataframe,
-                    oddLumiZBDataframe,
-                    sampleName,
-                    variable,
+                allPlots.append(
+                    makeROCCurveForVariable(
+                        theDataframe,
+                        valuePerEffs[variable],
+                        desiredEffs,
+                        sampleName,
+                        variable,
+                    )
                 )
             
             console.log(f"[bold green]\[Done][/bold green]: {sampleName}")
