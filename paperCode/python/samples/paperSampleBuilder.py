@@ -148,6 +148,7 @@ treeNames = [
     'CICADA_v2p2p0_Ntuplizer/CICADA_v2p2p0',
     'CICADA_v1p2p0N_Ntuplizer/CICADA_v1p2p0N',
     'CICADA_v2p2p0N_Ntuplizer/CICADA_v2p2p0N',
+    'CICADAv2p1p2Ntuplizer/L1TCaloSummaryOutput'
 ]
 
 def buildSample(path, treeNames):
