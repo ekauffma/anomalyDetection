@@ -23,7 +23,7 @@ def main(args):
     
     #console.print(listOfKeys)
     #We need to get a list of the available samples and score hist variables
-    scoreNamePattern = re.compile('(CICADA_|HT_).*hist(?=$)')
+    scoreNamePattern = re.compile('(anomalyScore|CICADA_|HT_).*hist(?=$)')
     def score_matched_substring(s):
         match = scoreNamePattern.search(s)
         return match.group(0) if match else None
@@ -33,7 +33,7 @@ def main(args):
     scoreNames = list(np.unique(scoreNames))
     console.print(scoreNames)
 
-    samplePattern = re.compile('.*(?=_(CICADA|HT))')
+    samplePattern = re.compile('.*(?=_(anomalyScore|CICADA|HT))')
     def sample_matched_substring(s):
         match = samplePattern.search(s)
         return match.group(0) if match else None

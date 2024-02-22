@@ -13,8 +13,9 @@ def loadPlotSuite(theFile, sampleName):
     sample_CICADA_1p2p0N = theFile.Get(f'{sampleName}_CICADA_v1p2p0N_score_hist')
     sample_CICADA_2p2p0 = theFile.Get(f'{sampleName}_CICADA_v2p2p0_score_hist')
     sample_CICADA_2p2p0N = theFile.Get(f'{sampleName}_CICADA_v2p2p0N_score_hist')
+    sample_anomalyScore = theFile.Get(f'{sampleName}_anomalyScore_hist')
     sample_HT = theFile.Get(f'{sampleName}_HT_hist')
-    return sample_CICADA_1p2p0, sample_CICADA_2p2p0, sample_CICADA_1p2p0N, sample_CICADA_2p2p0N, sample_HT
+    return sample_CICADA_1p2p0, sample_CICADA_2p2p0, sample_CICADA_1p2p0N, sample_CICADA_2p2p0N, sample_anomalyScore, sample_HT
 
 def makeROCFromHists(backgroundHist, sampleHist):
     efficiencyPoints = []
@@ -38,18 +39,18 @@ def makeROCFromHists(backgroundHist, sampleHist):
             effPoint[1],
         )
     # let's also quickly calculate an AUC trapezoid rule style.
-    AUC = 0.0
-    for i in range(len(efficiencyPoints)-1):
-        firstPoint = efficiencyPoints[i]
-        secondPoint = efficiencyPoints[i+1]
+    # AUC = 0.0
+    # for i in range(len(efficiencyPoints)-1):
+    #     firstPoint = efficiencyPoints[i]
+    #     secondPoint = efficiencyPoints[i+1]
         
-        a = firstPoint[1]
-        b = secondPoint[1]
-        h = abs(secondPoint[0]-firstPoint[0]) #abs unnnecessary, just too lazy to get the order right
-        area = ((a+b)/2)*h
-        AUC += area
+    #     a = firstPoint[1]
+    #     b = secondPoint[1]
+    #     h = abs(secondPoint[0]-firstPoint[0]) #abs unnnecessary, just too lazy to get the order right
+    #     area = ((a+b)/2)*h
+    #     AUC += area
 
-    return rocGraph, AUC
+    return rocGraph#, AUC
 
 def convertROCFromEffToRate(rocGraph):
     rateROC = rocGraph.Clone()
@@ -86,10 +87,11 @@ def main(args):
         'CICADA_v1p2p0_score_hist', 
         'CICADA_v2p2p0N_score_hist', 
         'CICADA_v2p2p0_score_hist', 
-        'HT_hist'
+        'anomalyScore_hist'
+        'HT_hist',
     ]
 
-    samplePattern = re.compile('.*(?=_(CICADA|HT))')
+    samplePattern = re.compile('.*(?=_(anomalyScore|CICADA|HT))')
     def sample_matched_substring(s):
         match = samplePattern.search(s)
         return match.group(0) if match else None
@@ -123,7 +125,7 @@ def main(args):
     ]
     
     for backgroundName in backgroundNames:
-        background_CICADA_1p2p0, background_CICADA_2p2p0, background_CICADA_1p2p0N, background_CICADA_2p2p0N, background_HT = loadPlotSuite(theFile, backgroundName)
+        background_CICADA_1p2p0, background_CICADA_2p2p0, background_CICADA_1p2p0N, background_CICADA_2p2p0N, background_anomalyScore, background_HT = loadPlotSuite(theFile, backgroundName)
         for sampleName in sampleNames:
             canvasName = f'{sampleName}_{backgroundName}'
             theCanvas = ROOT.TCanvas(
@@ -133,36 +135,41 @@ def main(args):
             if args.LogAxis:
                 theCanvas.SetLogy()
                 theCanvas.SetLogx()
-            sample_CICADA_1p2p0, sample_CICADA_2p2p0, sample_CICADA_1p2p0N, sample_CICADA_2p2p0N, sample_HT = loadPlotSuite(theFile, sampleName)
+            sample_CICADA_1p2p0, sample_CICADA_2p2p0, sample_CICADA_1p2p0N, sample_CICADA_2p2p0N, sample_anomalyScore, sample_HT = loadPlotSuite(theFile, sampleName)
 
-            roc_CICADA_1p2p0, CICADA_1p2p0_AUC = makeROCFromHists(background_CICADA_1p2p0, sample_CICADA_1p2p0)
-            roc_CICADA_1p2p0N, CICADA_1p2p0N_AUC = makeROCFromHists(background_CICADA_1p2p0N, sample_CICADA_1p2p0N)
-            roc_CICADA_2p2p0, CICADA_2p2p0_AUC = makeROCFromHists(background_CICADA_2p2p0, sample_CICADA_2p2p0)
-            roc_CICADA_2p2p0N, CICADA_2p2p0N_AUC = makeROCFromHists(background_CICADA_2p2p0N, sample_CICADA_2p2p0N)
-            roc_HT, HT_AUC = makeROCFromHists(background_HT, sample_HT)
+            roc_CICADA_1p2p0 = makeROCFromHists(background_CICADA_1p2p0, sample_CICADA_1p2p0)
+            roc_CICADA_1p2p0N = makeROCFromHists(background_CICADA_1p2p0N, sample_CICADA_1p2p0N)
+            roc_CICADA_2p2p0 = makeROCFromHists(background_CICADA_2p2p0, sample_CICADA_2p2p0)
+            roc_CICADA_2p2p0N = makeROCFromHists(background_CICADA_2p2p0N, sample_CICADA_2p2p0N)
+            roc_anomalyScore = makeROCFromHists(background_anomalyScore, sample_anomalyScore)
+            roc_HT = makeROCFromHists(background_HT, sample_HT)
 
             roc_CICADA_1p2p0 = convertROCFromEffToRate(roc_CICADA_1p2p0)
             roc_CICADA_2p2p0 = convertROCFromEffToRate(roc_CICADA_2p2p0)
             roc_CICADA_1p2p0N = convertROCFromEffToRate(roc_CICADA_1p2p0N)
             roc_CICADA_2p2p0N = convertROCFromEffToRate(roc_CICADA_2p2p0N)
+            roc_anomalyScore = convertROCFromEffToRate(roc_anomalyScore)
             roc_HT = convertROCFromEffToRate(roc_HT)            
 
             roc_CICADA_1p2p0.SetLineColor(ROOT.kBlue)
             roc_CICADA_2p2p0.SetLineColor(ROOT.kRed)
             roc_CICADA_1p2p0N.SetLineColor(ROOT.kGreen)
             roc_CICADA_2p2p0N.SetLineColor(ROOT.kOrange)
+            roc_anomalyScore.SetLineColor(ROOT.kViolet)
             roc_HT.SetLineColor(ROOT.kBlack)
             
             roc_CICADA_1p2p0.SetLineWidth(2)
             roc_CICADA_2p2p0.SetLineWidth(2)
             roc_CICADA_1p2p0N.SetLineWidth(2)
             roc_CICADA_2p2p0N.SetLineWidth(2)
+            roc_anomalyScore.SetLineWidth(2)
             roc_HT.SetLineWidth(2)
 
             roc_CICADA_1p2p0.SetMarkerStyle(20)
             roc_CICADA_2p2p0.SetMarkerStyle(20)
             roc_CICADA_1p2p0N.SetMarkerStyle(20)
             roc_CICADA_2p2p0N.SetMarkerStyle(20)
+            roc_anomalyScore.SetMarkerStyle(20)
             roc_HT.SetMarkerStyle(20)
             
 
@@ -184,6 +191,7 @@ def main(args):
             roc_CICADA_2p2p0.Draw("L")
             roc_CICADA_1p2p0N.Draw("L")
             roc_CICADA_2p2p0N.Draw("L")
+            roc_anomalyScore.Draw("L")
             if args.HT:
                 roc_HT.Draw("L")
 
@@ -197,14 +205,17 @@ def main(args):
             theCanvas.SaveAs(
                 os.path.join(outputDirectory, f'{canvasName}.png')
             )
-            console.print(f"Background: {backgroundName}")
-            console.print(f"Sample: {sampleName}")
-            console.print("AUCs:")
-            console.print(f"CICADA 1p2p0: {CICADA_1p2p0_AUC:.4f}")
-            console.print(f"CICADA 1p2p0N: {CICADA_1p2p0N_AUC:.4f}")
-            console.print(f"CICADA 2p2p0: {CICADA_2p2p0_AUC:.4f}")
-            console.print(f"CICADA 2p2p0N: {CICADA_2p2p0N_AUC:.4f}")
-            console.print(f"HT: {HT_AUC:.4f}")
+            # console.print(f"Background: {backgroundName}")
+            # console.print(f"Sample: {sampleName}")
+            # console.print("AUCs:")
+            # console.print(f"CICADA 1p2p0: {CICADA_1p2p0_AUC:.4f}")
+            # console.print(f"CICADA 1p2p0N: {CICADA_1p2p0N_AUC:.4f}")
+            # console.print(f"CICADA 2p2p0: {CICADA_2p2p0_AUC:.4f}")
+            # console.print(f"CICADA 2p2p0N: {CICADA_2p2p0N_AUC:.4f}")
+            # console.print(f'CICADA 2p1p2: {CICADA_anomalyScore_AUC}')
+            # console.print(f"HT: {HT_AUC:.4f}")
+            
+            del dummyHistogram
     theFile.Close()
 
 

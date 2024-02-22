@@ -62,6 +62,7 @@ def main(args):
         'CICADA_v2p2p0_score',
         'CICADA_v1p2p0N_score',
         'CICADA_v2p2p0N_score',
+        'anomalyScore',
         'HT'
     ]
     allPlots = []
