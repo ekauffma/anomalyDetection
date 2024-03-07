@@ -42,7 +42,6 @@ process.MessageLogger.suppressWarning = cms.untracked.vstring(
 
 process.source = cms.Source("PoolSource",
                             fileNames = cms.untracked.vstring(options.inputFiles),
-
 )
 
 process.options = cms.untracked.PSet(
@@ -76,8 +75,10 @@ process.options = cms.untracked.PSet(
 
 from Configuration.AlCa.GlobalTag import GlobalTag
 if options.isData:
+    print("Treating config as data.")
     process.GlobalTag = GlobalTag(process.GlobalTag, '130X_dataRun3_Prompt_v4', '')
 else:
+    print("Treating config as simulation.")
     process.GlobalTag = GlobalTag(process.GlobalTag, '130X_mcRun3_2023_realistic_postBPix_v2', '')
 
 process.raw2digi_step = cms.Path(process.RawToDigi)
@@ -156,8 +157,19 @@ process.load("anomalyDetection.paperCode.kerasModels_cfi")
 process.kerasModelsSequence = cms.Sequence(
     process.CICADA_v1p2p0_Ntuplizer +
     process.CICADA_v2p2p0_Ntuplizer +
+    process.CICADA_vXp2p0_Teacher_Ntuplizer +
+
     process.CICADA_v1p2p0N_Ntuplizer +
-    process.CICADA_v2p2p0N_Ntuplizer
+    process.CICADA_v2p2p0N_Ntuplizer +
+    process.CICADA_vXp2p0N_Teacher_Ntuplizer +
+
+    process.CICADA_v1p2p1_Ntuplizer +
+    process.CICADA_v2p2p1_Ntuplizer +
+    process.CICADA_vXp2p1_Teacher_Ntuplizer +
+
+    process.CICADA_v1p2p1N_Ntuplizer +
+    process.CICADA_v2p2p1N_Ntuplizer +
+    process.CICADA_vXp2p1N_Teacher_Ntuplizer
 )
 
 process.NtuplePath = cms.Path(

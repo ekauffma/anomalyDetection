@@ -1,9 +1,8 @@
-// Class for creating a neural network score tree for given models
+// Class for monitoring the performance of the CICADA teacher models
 // to be attached to file trees for processing
 
 #include <memory>
 
-// user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/one/EDAnalyzer.h"
 #include "FWCore/Framework/interface/Event.h"
@@ -26,21 +25,23 @@
 
 #include "TTree.h"
 #include <string>
+#include <cmath>
 
-class kerasCICADAModelNtuplizer : public edm::one::EDAnalyzer< edm::one::SharedResources >
+class kerasCICADATeacherModelNtuplizer : public edm::one::EDAnalyzer< edm::one::SharedResources >
 {
 public:
-  explicit kerasCICADAModelNtuplizer(const edm::ParameterSet&);
-  ~kerasCICADAModelNtuplizer() override;
+  explicit kerasCICADATeacherModelNtuplizer(const edm::ParameterSet&);
+  ~kerasCICADATeacherModelNtuplizer() override;
   static void fillDescriptions(edm::ConfigurationDescriptions &);
 
 private:
   void beginJob() override {};
   void analyze(const edm::Event&, const edm::EventSetup&) override;
   void endJob() override {};
+  float averageSquareErrors( const std::vector<float>& );
 
   const edm::EDGetTokenT<L1CaloRegionCollection> emuRegionsToken;
-
+  
   tensorflow::Options options;
   tensorflow::MetaGraphDef* metaGraph;
   tensorflow::Session* session;
@@ -50,38 +51,33 @@ private:
   float modelOutput;
   float noiseSuppressionLevel = 0.0;
 
-  edm::Service<TFileService> theFileService;  
+  edm::Service<TFileService> theFileService;
   TTree* triggerTree;
-
 };
 
-kerasCICADAModelNtuplizer::kerasCICADAModelNtuplizer(const edm::ParameterSet& iConfig):
+kerasCICADATeacherModelNtuplizer::kerasCICADATeacherModelNtuplizer(const edm::ParameterSet& iConfig):
   emuRegionsToken(consumes<L1CaloRegionCollection>(iConfig.getParameter<edm::InputTag>("regionToken"))),
   branchName(iConfig.getParameter<std::string>("branchName")),
   treeName(iConfig.getParameter<std::string>("treeName"))
 {
   usesResource("TFileService");
-
+  
   std::string fullPathToModel(std::getenv("CMSSW_BASE"));
   fullPathToModel.append(iConfig.getParameter<std::string>("modelLocation"));
-  // FileInPath doesn't like directories...
-  // edm::FileInPath theFilePath = iConfig.getParameter<edm::FileInPath>("modelLocation");
-  // std::string fullPathToModel = theFilePath.fullPath();
 
   if (iConfig.existsAs<int>("noiseSuppressionLevel"))
     noiseSuppressionLevel = (float) iConfig.getParameter<int>("noiseSuppressionLevel");
   else
     noiseSuppressionLevel = 0.0;
-	 
-  
-  triggerTree = theFileService->make<TTree>(treeName.c_str(), "keras model output");
+
+  triggerTree = theFileService->make<TTree>(treeName.c_str(), "keras teacher model output");
   triggerTree->Branch(branchName.c_str(), &modelOutput);
 
   metaGraph = tensorflow::loadMetaGraphDef(fullPathToModel);
   session = tensorflow::createSession(metaGraph, fullPathToModel, options);
 }
 
-kerasCICADAModelNtuplizer::~kerasCICADAModelNtuplizer()
+kerasCICADATeacherModelNtuplizer::~kerasCICADATeacherModelNtuplizer()
 {
   delete metaGraph;
   metaGraph = nullptr;
@@ -89,15 +85,15 @@ kerasCICADAModelNtuplizer::~kerasCICADAModelNtuplizer()
   session=nullptr;
 }
 
-void kerasCICADAModelNtuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
-{ 
+void kerasCICADATeacherModelNtuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
+{
   modelOutput = 0.0;
-  
+  std::vector<float> squareModelErrors;
+
   edm::Handle<std::vector<L1CaloRegion>> regions;
   iEvent.getByToken(emuRegionsToken, regions);
-
-  tensorflow::Tensor modelInput(tensorflow::DT_FLOAT, {1,18*14});
-
+  
+  tensorflow::Tensor modelInput(tensorflow::DT_FLOAT, {1, 18*14});
   for (const L1CaloRegion& theRegion: *regions)
     {
       float towerEnergy = theRegion.et();
@@ -108,21 +104,38 @@ void kerasCICADAModelNtuplizer::analyze(const edm::Event& iEvent, const edm::Eve
     }
 
   std::vector<tensorflow::Tensor> tensorOutput;
-  tensorflow::run(session, {{"serving_default_inputs_:0", modelInput}}, {"StatefulPartitionedCall:0"}, &tensorOutput);
+  tensorflow::run(session, {{"serving_default_teacher_inputs_:0", modelInput}}, {"StatefulPartitionedCall:0"}, &tensorOutput);
 
-  modelOutput = tensorOutput[0].matrix<float>()(0, 0);
-
+  tensorflow::Tensor resultTensor = tensorOutput.at(0);
+  for (const L1CaloRegion& theRegion: *regions)
+    {
+      float modelPrediction = resultTensor.tensor<float, 4>()(0, theRegion.gctPhi(), theRegion.gctEta()-4, 0);
+      float trueValue = modelInput.tensor<float, 2>()(0, theRegion.gctPhi()*14 + (theRegion.gctEta()-4));
+      squareModelErrors.push_back(pow(trueValue-modelPrediction, 2));
+    }
+  modelOutput = sqrt(averageSquareErrors(squareModelErrors));
+  
   triggerTree->Fill();
 }
 
-void kerasCICADAModelNtuplizer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
+float kerasCICADATeacherModelNtuplizer::averageSquareErrors(const std::vector<float>& theVec)
+{
+  float average = 0.0;
+  for (const float& val: theVec)
+    average += val;
+  average = average / (float)theVec.size();
+  return average;
+}
+
+void kerasCICADATeacherModelNtuplizer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) 
+{
   edm::ParameterSetDescription desc;
   desc.add<edm::InputTag>("regionToken", edm::InputTag("simCaloStage2Layer1Digis"));
   desc.add<std::string>("branchName");
   desc.add<std::string>("treeName");
   desc.add<std::string>("modelLocation");
   desc.addOptional<int>("noiseSuppressionLevel");
-  descriptions.add("kerasCICADAModelNtuplizer", desc);
+  descriptions.add("kerasCICADATeacherModelNtuplizer", desc);
 }
 
-DEFINE_FWK_MODULE(kerasCICADAModelNtuplizer);
+DEFINE_FWK_MODULE(kerasCICADATeacherModelNtuplizer);
