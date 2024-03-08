@@ -19,6 +19,8 @@ def main(args):
         statusCommand = f'crab status -d {directory}/crab/crab_Paper_Ntuples_{args.datetime}'
         if args.kill:
             statusCommand = f'crab kill -d {directory}/crab/crab_Paper_Ntuples_{args.datetime}'
+        elif args.resubmit:
+            statusCommand = f'crab resubmit -d {directory}/crab/crab_Paper_Ntuples_{args.datetime}'
         console.print(f'Command:\n{statusCommand}')
         subprocess.run(
             [statusCommand],
@@ -40,12 +42,20 @@ if __name__ == '__main__':
         '--datetime',
         required=True,
         nargs='?',
-        help='The date of submissions to check. Format is DDMMMYY, where D is a (zero-padded) day num, MMM is a month abbreviation (e.g. Jun or Feb) and YY is the last two year digits'
+        help='The date of submissions to check. Format is DDMMMYYYY, where D is a (zero-padded) day num, MMM is a month abbreviation (e.g. Jun or Feb) and YYYY is the year'
     )
-    parser.add_argument(
+    
+    commandSub = parser.add_mutually_exclusive_group()
+
+    commandSub.add_argument(
         '--kill',
         action='store_true',
         help='Instead of reading the status, kill everything with the given datetime'
+    )
+    commandSub.add_argument(
+        '--resubmit',
+        action='store_true',
+        help='Instead of reading the status resubmit the ntuples'
     )
 
     args = parser.parse_args()
