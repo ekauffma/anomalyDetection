@@ -60,7 +60,7 @@ CICADA_v1p2p1_Ntuplizer = cms.EDAnalyzer(
     regionToken = cms.InputTag("simCaloStage2Layer1Digis"),
     branchName = cms.string("CICADA_v1p2p1_score"),
     treeName = cms.string("CICADA_v1p2p1"),
-    modelLocation = cms.string("/src/anomalyDetection/paperCode/data/models/data_models_noiseSuppressed_28Feb2024/cicada-v1/")
+    modelLocation = cms.string("/src/anomalyDetection/paperCode/data/models/data_models_noiseSuppressed_28Feb2024/cicada-v1/"),
     noiseSuppressionLevel = cms.int32(5),
 )
 
@@ -69,7 +69,7 @@ CICADA_v2p2p1_Ntuplizer = cms.EDAnalyzer(
     regionToken = cms.InputTag("simCaloStage2Layer1Digis"),
     branchName = cms.string("CICADA_v2p2p0_score"),
     treeName = cms.string("CICADA_v2p2p0"),
-    modelLocation = cms.string("/src/anomalyDetection/paperCode/data/models/data_models_noiseSuppressed_28Feb2024/cicada-v2/")    
+    modelLocation = cms.string("/src/anomalyDetection/paperCode/data/models/data_models_noiseSuppressed_28Feb2024/cicada-v2/")    ,
     noiseSuppressionLevel = cms.int32(5),
 )
 
@@ -79,7 +79,7 @@ CICADA_vXp2p1_Teacher_Ntuplizer = cms.EDAnalyzer(
     regionToken = cms.InputTag("simCaloStage2Layer1Digis"),
     branchName = cms.string("CICADA_vXp2p1_teacher_score"),
     treeName = cms.string("CICADA_vXp2p1_teacher"),
-    modelLocation = cms.string("/src/anomalyDetection/paperCode/data/models/data_models_noiseSuppressed_28Feb2024/teacher/")    
+    modelLocation = cms.string("/src/anomalyDetection/paperCode/data/models/data_models_noiseSuppressed_28Feb2024/teacher/"),
     noiseSuppressionLevel = cms.int32(5),
 )
 
