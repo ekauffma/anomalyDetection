@@ -1,14 +1,17 @@
 import ROOT
 import os
 from rich.console import Console
+from rich.progress import track
 import numpy as np
 import re
 import argparse
+from anomalyDetection.anomalyTriggerSkunkworks.utilities.decorators import quietROOTFunc
 
 console = Console()
 
 def main(args):
     ROOT.gStyle.SetOptStat(0)
+    console.log("CICADA HT Correlation")
 
     basePath = '/nfs_scratch/aloeliger/PaperPlotFiles/PlotFiles/'
     theFile = ROOT.TFile(
@@ -39,9 +42,9 @@ def main(args):
     console.print(sampleNames)
 
     for score in scoreNames:
-        for sampleName in sampleNames:
+        for sampleName in track(sampleNames, description="samples"):
             plotName = f'{sampleName}_{score}'
-            console.log(plotName)
+            #console.log(plotName)
             thePlot = theFile.Get(plotName)
             canvasName = f'{sampleName}_{score}_correlation'
             theCanvas = ROOT.TCanvas(canvasName, canvasName)
@@ -59,7 +62,7 @@ def main(args):
             thePlot.GetYaxis().SetTitle("HT")
             thePlot.GetXaxis().SetTitle(axisNameMap[score])
             
-            theCanvas.SaveAs(
+            quietROOTFunc(theCanvas.SaveAs)(
                 os.path.join(outputDirectory, f'{canvasName}.png')
             )
     theFile.Close()

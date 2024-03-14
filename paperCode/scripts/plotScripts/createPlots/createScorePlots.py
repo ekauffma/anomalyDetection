@@ -11,7 +11,10 @@ def makePlotsForScores(theDataframe, listOfScores, baseName, nBins=100):
     for scoreName in listOfScores:
         minScore = 0.0
         if scoreName != 'HT':
-            maxScore = 256.0 # actually 255.99609375
+            if "teacher" in scoreName:
+                maxScore = 125.0
+            else:
+                maxScore = 256.0 # actually 255.99609375
         else:
             maxScore = 1024.0
         histName = f'{baseName}_{scoreName}_hist'
@@ -60,21 +63,33 @@ def main(args):
     scoreNames = [
         'CICADA_v1p2p0_score',
         'CICADA_v2p2p0_score',
+        'CICADA_vXp2p0_teacher_score',
+
         'CICADA_v1p2p0N_score',
         'CICADA_v2p2p0N_score',
+        'CICADA_vXp2p0N_teacher_score',
+        
+        'CICADA_v1p2p1_score',
+        'CICADA_v2p2p1_score',
+        'CICADA_vXp2p1_teacher_score',
+
+        'CICADA_v1p2p1N_score',
+        'CICADA_v2p2p1N_score',
+        'CICADA_vXp2p1N_teacher_score',
+
         'anomalyScore',
         'HT'
     ]
     allPlots = []
 
-    allPlots += makePlotsForScores(evenLumiZBDataframe, scoreNames, 'Train_ZeroBias')
-    allPlots += makePlotsForScores(oddLumiZBDataframe, scoreNames, 'Test_ZeroBias')
-    console.log(f'Zero Bias: {len(samples["ZeroBias"].listOfFiles):>6d} Files')
-
     if args.ForROCs:
-        nBinsForPlots = 100000
+        nBinsForPlots = 500
     else:
         nBinsForPlots = 100
+
+    allPlots += makePlotsForScores(evenLumiZBDataframe, scoreNames, 'Train_ZeroBias', nBinsForPlots)
+    allPlots += makePlotsForScores(oddLumiZBDataframe, scoreNames, 'Test_ZeroBias', nBinsForPlots)
+    console.log(f'Zero Bias: {len(samples["ZeroBias"].listOfFiles):>6d} Files')
 
     mcDataframes = []
     with console.status("Running through samples..."):

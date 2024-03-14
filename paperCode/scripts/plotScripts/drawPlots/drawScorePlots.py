@@ -1,9 +1,11 @@
 import ROOT
 import argparse
 from rich.console import Console
+from rich.progress import track
 import os
 import numpy as np
 import re
+from anomalyDetection.anomalyTriggerSkunkworks.utilities.decorators import quietROOTFunc
 
 console = Console()
 
@@ -84,7 +86,7 @@ def main(args):
 
         TrainZeroBias.SetTitle("")
 
-        for sampleName in sampleNames:
+        for sampleName in track(sampleNames, description="Saving samples"):
             sample = theFile.Get(f'{sampleName}_{score}')
             
             sample.SetLineWidth(4)
@@ -216,7 +218,7 @@ def main(args):
             neutrinoNeutrinoRatio.GetYaxis().SetNdivisions(5,0,0)
             neutrinoNeutrinoRatio.GetYaxis().SetTitle("Ratio to Neutrino Gun")
 
-            theCanvas.SaveAs(
+            quietROOTFunc(theCanvas.SaveAs)(
                 os.path.join(outputDirectory, f'{sampleName}_{score}.png')
             )
     theFile.Close()

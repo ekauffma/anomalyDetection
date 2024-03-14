@@ -48,9 +48,21 @@ def main(args):
     scoreNames = [
         'CICADA_v1p2p0_score',
         'CICADA_v2p2p0_score',
+        'CICADA_vXp2p0_teacher_score',
+
         'CICADA_v1p2p0N_score',
         'CICADA_v2p2p0N_score',
-        'anomalyScore'
+        'CICADA_vXp2p0N_teacher_score',
+        
+        'CICADA_v1p2p1_score',
+        'CICADA_v2p2p1_score',
+        'CICADA_vXp2p1_teacher_score',
+
+        'CICADA_v1p2p1N_score',
+        'CICADA_v2p2p1N_score',
+        'CICADA_vXp2p1N_teacher_score',
+
+        'anomalyScore',
     ]    
 
     allPlots = []

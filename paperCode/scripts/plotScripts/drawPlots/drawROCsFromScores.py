@@ -1,10 +1,12 @@
 import ROOT
 import argparse
 from rich.console import Console
+from rich.progress import track
 import os
 import numpy as np
 import re
 from anomalyDetection.anomalyTriggerSkunkworks.plotSettings.utilities import convertEffToRate, convertRateToEff
+from anomalyDetection.anomalyTriggerSkunkworks.utilities.decorators import quietROOTFunc
 
 console = Console()
 
@@ -19,16 +21,17 @@ def loadPlotSuite(theFile, sampleName):
 
 def makeROCFromHists(backgroundHist, sampleHist):
     efficiencyPoints = []
-    nBins = backgroundHist.GetNbinsX()
-    for i in range(1,nBins+1):
-        backgroundEff = backgroundHist.Integral(i,nBins) / backgroundHist.Integral()
-        sampleEff = sampleHist.Integral(i,nBins) / sampleHist.Integral()
+    assert (sampleHist.GetNbinsX() == backgroundHist.GetNbinsX()), f"Mismatched Hists when making ROC, sample: {sampleHist.GetNbinsX()}, background: {backgroundHist.GetNbinsX()}"
+    nBins = backgroundHist.GetNbinsX()+2
+    #Just doing .Integral() seems to yield inconsistent wrong answers...
+    #The integral needs to be all bins, 0 to nBins+1
+    for i in range(0,nBins+2):
+        backgroundEff = backgroundHist.Integral(i,nBins) / backgroundHist.Integral(0, nBins+1)
+        sampleEff = sampleHist.Integral(i,nBins) / sampleHist.Integral(0, nBins+1)
         efficiencyPoints.append((backgroundEff, sampleEff))
+
     efficiencyPoints.append((0.0, 0.0))
     efficiencyPoints.reverse()
-
-    #console.print(efficiencyPoints)
-    #exit(0)
     
     nPoints = len(efficiencyPoints)
     rocGraph = ROOT.TGraph(nPoints)
@@ -38,19 +41,8 @@ def makeROCFromHists(backgroundHist, sampleHist):
             effPoint[0],
             effPoint[1],
         )
-    # let's also quickly calculate an AUC trapezoid rule style.
-    # AUC = 0.0
-    # for i in range(len(efficiencyPoints)-1):
-    #     firstPoint = efficiencyPoints[i]
-    #     secondPoint = efficiencyPoints[i+1]
-        
-    #     a = firstPoint[1]
-    #     b = secondPoint[1]
-    #     h = abs(secondPoint[0]-firstPoint[0]) #abs unnnecessary, just too lazy to get the order right
-    #     area = ((a+b)/2)*h
-    #     AUC += area
 
-    return rocGraph#, AUC
+    return rocGraph
 
 def convertROCFromEffToRate(rocGraph):
     rateROC = rocGraph.Clone()
@@ -63,6 +55,7 @@ def convertROCFromEffToRate(rocGraph):
 
 def main(args):
     ROOT.gStyle.SetOptStat(0)
+    console.log("ROCs from Scores")
 
     if args.FineGrain:
         inputFileName = 'scorePlotsForROCs.root'
@@ -126,7 +119,7 @@ def main(args):
     
     for backgroundName in backgroundNames:
         background_CICADA_1p2p0, background_CICADA_2p2p0, background_CICADA_1p2p0N, background_CICADA_2p2p0N, background_anomalyScore, background_HT = loadPlotSuite(theFile, backgroundName)
-        for sampleName in sampleNames:
+        for sampleName in track(sampleNames, description="Samples"):
             canvasName = f'{sampleName}_{backgroundName}'
             theCanvas = ROOT.TCanvas(
                 canvasName,
@@ -202,7 +195,7 @@ def main(args):
             dummyHistogram.GetXaxis().SetRangeUser(1e-1, 100.0)
             dummyHistogram.SetTitle("")
 
-            theCanvas.SaveAs(
+            quietROOTFunc(theCanvas.SaveAs)(
                 os.path.join(outputDirectory, f'{canvasName}.png')
             )
             # console.print(f"Background: {backgroundName}")
