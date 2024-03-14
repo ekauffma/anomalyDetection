@@ -214,7 +214,10 @@ def main(args) -> None:
     currentTime = datetime.datetime.now()
     currentTimeStr = currentTime.strftime("%d%b%Y")
     
-    finalShellFileName = f'FinalSubmission_{currentTimeStr}.sh'
+    if args.isData:
+        finalShellFileName = f'FinalSubmission_Data_{currentTimeStr}.sh'
+    else:
+        finalShellFileName = f'FinalSubmission_MC_{currentTimeStr}.sh'
     finalShellFile = open(finalShellFileName,'w')
 
     jobName = f'Paper_Ntuples_{currentTimeStr}'
