@@ -67,8 +67,8 @@ CICADA_v1p2p1_Ntuplizer = cms.EDAnalyzer(
 CICADA_v2p2p1_Ntuplizer = cms.EDAnalyzer(
     'kerasCICADAModelNtuplizer',
     regionToken = cms.InputTag("simCaloStage2Layer1Digis"),
-    branchName = cms.string("CICADA_v2p2p0_score"),
-    treeName = cms.string("CICADA_v2p2p0"),
+    branchName = cms.string("CICADA_v2p2p1_score"),
+    treeName = cms.string("CICADA_v2p2p1"),
     modelLocation = cms.string("/src/anomalyDetection/paperCode/data/models/data_models_noiseSuppressed_28Feb2024/cicada-v2/")    ,
     noiseSuppressionLevel = cms.int32(5),
 )
