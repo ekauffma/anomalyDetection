@@ -5,6 +5,7 @@ import os
 import math
 import statistics
 import random
+import argparse
 
 from rich.console import Console
 from rich.progress import track
@@ -63,6 +64,16 @@ class triggerJet(jet):
         self.BX = theChain.L1Upgrade.jetBx[entryNum]
         self.HWQuality = theChain.L1Upgrade.jetHwQual[entryNum]
 
+class noPUTriggerJet(triggerJet):
+    def __init__(self, theChain: ROOT.TChain, entryNum: int):
+        super().__init__(theChain, entryNum)
+        self.lorentzVector.SetPtEtaPhiM(
+            self.rawEt * 0.5,
+            self.eta,
+            self.phi,
+            0.0
+        )
+        
 
 class eventData():
     def __init__(self, theChain: ROOT.TChain):
@@ -71,6 +82,11 @@ class eventData():
         self.nECALTP = self.chain.CaloTP.nECALTP
         self.nHCALTP = self.chain.CaloTP.nHCALTP
         self.totalTP = self.nECALTP + self.nHCALTP
+        self.totalTPEnergy = 0.0
+        for i in range(self.nECALTP):
+            self.totalTPEnergy += self.chain.CaloTP.ecalTPet[i]
+        for i in range(self.nHCALTP):
+            self.totalTPEnergy += self.chain.CaloTP.hcalTPet[i]
 
     def findMatchedJetEnergyDifferences(self):
         etDeltas = []
@@ -85,7 +101,7 @@ def createTriggerAndPuppiJets(theChain):
     for entryNum in range(theChain.nObjects):
         puppiJets.append(puppiJet(theChain, entryNum))
     for entryNum in range(theChain.L1Upgrade.nJets):
-        triggerJets.append(triggerJet(theChain, entryNum))
+        triggerJets.append(noPUTriggerJet(theChain, entryNum))
     
     return triggerJets, puppiJets
 
@@ -125,7 +141,29 @@ def createMatchedAndUnmatchedJets(triggerJets, puppiJets):
         matchedJets.append((triggerJet, puppiJet))
     return matchedJets, unmatchedTriggerJets, unmatchedPuppiJets
 
-def main():
+def makeAverageHistograms(energyDeltaHist, nMatchedPairsHist, nameTitle):
+    averageHist = energyDeltaHist.Clone()
+    averageHist.Divide(nMatchedPairsHist)
+
+    averageHist.SetName(nameTitle)
+    averageHist.SetName(nameTitle)
+
+    return averageHist
+
+def makeDebugTable(averagePlot, minX, maxX, nBins, columnName):
+    outputTable = Table(title="Average(Pupppi ET - Trigger ET)")
+    outputTable.add_column(columnName, justify="center")
+    outputTable.add_column("Energy Delta", justify="center")
+
+    for i in range (1, averageHist.GetNbinsX()+1):
+        rangeLow = int((i-1)*(maxX-minX)/nBins)
+        rangeHigh = int(i*(maxX-minX)/nBins)
+        energyDelta = averagePlot.GetBinContent(i)
+        outputTable.add_row(f"{rangeLow}-{rangeHigh}", f'{energyDelta}')
+
+    console.print(outputTable)
+    
+def main(args):
     filePaths = [
         "/hdfs/store/user/aloelige/EphemeralZeroBias0/SNAIL_2023RunD_EZB0_18Oct2023/231018_205626/",
         # "/hdfs/store/user/aloelige/EphemeralZeroBias2/SNAIL_2023RunD_EZB2_18Oct2023/231018_205829/",
@@ -164,27 +202,52 @@ def main():
     # df = ROOT.RDataFrame(eventChain)
 
     # console.print(f'Available columns: \n{df.GetColumnNames()}')
-
+    
 
     numEvents = eventChain.GetEntries()
+    if args.maxEvents is not None:
+        numEvents = min(numEvents, args.maxEvents)
     console.print(f'Processing {numEvents} events...', style='underline')
 
     #histogram counting number of jets per nECAL/nHCAL TPs
+    nBins = 10
+    minTPs = 0.0
+    maxTPs = 2000.0
+
+    minTPEnergy = 0.0
+    maxTPEnergy = 4000.0
+
     nMatchedPairsHist = ROOT.TH1D(
         "nMatchedPairsHist",
         "nMatchedPairsHist",
-        50,
-        0.0,
-        2000.0,
+        nBins,
+        minTPs,
+        maxTPs
     )
     #histogram weighted by the energy delta
     energyDeltasHist = ROOT.TH1D(
         "energyDeltasHist",
         "energyDeltasHist",
-        50,
-        0.0,
-        2000.0
+        nBins,
+        minTPs,
+        maxTPs
     )
+
+    nMatchedPairs_TPET_Hist = ROOT.TH1D(
+        "nMatchedPairs_TPET_Hist",
+        "nMatchedPairs_TPET_Hist",
+        nBins,
+        minTPEnergy,
+        maxTPEnergy,
+    )
+    energyDeltas_TPET_Hist = ROOT.TH1D(
+        "energyDeltas_TPET_Hist",
+        "energyDeltas_TPET_Hist",
+        nBins,
+        minTPEnergy,
+        maxTPEnergy,
+    )
+
     for i in track(range(numEvents), description="Scrolling events"):
     #for i in track(range(100), description="scrolling events"):
         # Grab the event
@@ -209,22 +272,40 @@ def main():
         
         #now let's fill the histogram
         energyDeltasHist.Fill(totalTPs, energyDelta)
+
+        totalTPEnergy = event.totalTPEnergy
+        nMatchedPairs_TPET_Hist.Fill(totalTPEnergy, nMatchedJets)
+        energyDeltas_TPET_Hist.Fill(totalTPEnergy, energyDelta)
     
     #then to get average, you divide the bins of the energy deltas hist
     #by the bin contents of the number of matched jets hists
-    averageJetEnergyDelta = energyDeltasHist.Clone()
-    averageJetEnergyDelta.Divide(nMatchedPairsHist) #errors on this will be wrong, we need to set errors of of matches pairs to 0
+    averageJetEnergyDelta = makeAverageHistograms(energyDeltasHist, nMatchedPairsHist, "AverageJetEnergyDelta")
+    averageJetEnergyDelta_TPET = makeAverageHistograms(energyDeltas_TPET_Hist, nMatchedPairs_TPET_Hist, "AverageJetEnergyDelta_TPET")
 
-    outputTable = Table(title="Average (Puppi ET - Trigger ET)")
-    outputTable.add_column("nTPs", justify="center")
-    outputTable.add_column("Energy Delta", justify="center")
 
-    for i in range(1, averageJetEnergyDelta.GetNbinsX()+1):
-        tpRange_low = int((i-1)*2000.0/50.0)
-        tpRange_high = int(i*2000.0/50.0)
-        energyDelta = averageJetEnergyDelta.GetBinContent(i)
-        outputTable.add_row(f"{tpRange_low}-{tpRange_high}", f"{energyDelta}")
-    console.print(outputTable)
+    makeDebugTable(averageJetEnergyDelta, minTPs, maxTPs, nBins, "nTPs")
+
+    makeDebugTable(averageJetEnergyDelta_TPET, minTPEnergy, maxTPEnergy, nBins, "Total TP Energy")        
+
+    outputFile = ROOT.TFile("./averageJetEnergyFile.root", "RECREATE")
+    nMatchedPairsHist.Write()
+    energyDeltasHist.Write()
+    averageJetEnergyDelta.Write()
+    
+    nMatchedPairs_TPET_Hist.Write()
+    energyDeltas_TPET_Hist.Write()
+    averageJetEnergyDelta_TPET.Write()
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser(description="Make Jet Delta vs nTPs")
+
+    parser.add_argument(
+        "--maxEvents",
+        "-m",
+        type=int,
+        default=None,
+    )
+
+    args=parser.parse_args()
+
+    main(args)
