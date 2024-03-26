@@ -83,10 +83,12 @@ class eventData():
         self.nHCALTP = self.chain.CaloTP.nHCALTP
         self.totalTP = self.nECALTP + self.nHCALTP
         self.totalTPEnergy = 0.0
-        for i in range(self.nECALTP):
-            self.totalTPEnergy += self.chain.CaloTP.ecalTPet[i]
-        for i in range(self.nHCALTP):
-            self.totalTPEnergy += self.chain.CaloTP.hcalTPet[i]
+        self.totalTPEnergy += sum(self.chain.CaloTP.ecalTPet)
+        self.totalTPEnergy += sum(self.chain.CaloTP.hcalTPet)
+        #for i in range(self.nECALTP):
+        #    self.totalTPEnergy += self.chain.CaloTP.ecalTPet[i]
+        #for i in range(self.nHCALTP):
+        #    self.totalTPEnergy += self.chain.CaloTP.hcalTPet[i]
 
     def findMatchedJetEnergyDifferences(self):
         etDeltas = []
@@ -155,7 +157,7 @@ def makeDebugTable(averagePlot, minX, maxX, nBins, columnName):
     outputTable.add_column(columnName, justify="center")
     outputTable.add_column("Energy Delta", justify="center")
 
-    for i in range (1, averageHist.GetNbinsX()+1):
+    for i in range (1, averagePlot.GetNbinsX()+1):
         rangeLow = int((i-1)*(maxX-minX)/nBins)
         rangeHigh = int(i*(maxX-minX)/nBins)
         energyDelta = averagePlot.GetBinContent(i)
