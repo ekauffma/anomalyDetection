@@ -14,11 +14,11 @@ def drawHist(theHist, xAxisTitle, savePath):
     theHist.GetXaxis().SetTitle(xAxisTitle)
     theHist.GetYaxis().SetTitle("Average Matched Puppi - Trigger Jet p_{T}")
 
-    cmsLatex = ROOT.TLatex()
-    cmsLatex.SetTextSize(0.05)
-    cmsLatex.SetNDC(True)
-    cmsLatex.SetTextAlign(32)
-    cmsLatex.DrawLatex(0.9,0.92, "#font[61]{CMS} #font[52]{Preliminary}")
+    # cmsLatex = ROOT.TLatex()
+    # cmsLatex.SetTextSize(0.05)
+    # cmsLatex.SetNDC(True)
+    # cmsLatex.SetTextAlign(32)
+    # cmsLatex.DrawLatex(0.9,0.92, "#font[61]{CMS} #font[52]{Preliminary}")
     
     theCanvas.SaveAs(savePath)
 

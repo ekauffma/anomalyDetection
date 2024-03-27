@@ -289,7 +289,7 @@ def main(args):
 
     makeDebugTable(averageJetEnergyDelta_TPET, minTPEnergy, maxTPEnergy, nBins, "Total TP Energy")        
 
-    outputFile = ROOT.TFile("./averageJetEnergyFile.root", "RECREATE")
+    outputFile = ROOT.TFile(args.outputFileName, "RECREATE")
     nMatchedPairsHist.Write()
     energyDeltasHist.Write()
     averageJetEnergyDelta.Write()
@@ -306,6 +306,11 @@ if __name__ == '__main__':
         "-m",
         type=int,
         default=None,
+    )
+    parser.add_argument(
+        "--outputFileName",
+        "-o",
+        default="./averageJetEnergyFile.root",
     )
 
     args=parser.parse_args()
