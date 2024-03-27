@@ -82,6 +82,7 @@ def createTeacherScorePlot(frame, sampleName, theTeacherStudentCollection):
         scoreModel,
         theTeacherStudentCollection.teacherModel.scoreName,
     )
+    return scoreBooking
 
 def createStudentScorePlot(frame, sampleName, theTeacherStudentPair):
     histoName = f"{sampleName}_{theTeacherStudentPair.studentModel.modelName}_student_score"

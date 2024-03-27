@@ -1,10 +1,19 @@
 import ROOT
 import argparse
+from anomalyDetection.paperCode.plottingUtilities.models import *
 from anomalyDetection.paperCode.samples.paperSampleBuilder import samples
 from rich.console import Console
 import os
 
 console = Console()
+
+def makeAllScoreNamesFromGroups(listOfGroups):
+    scoreNameList = []
+    for group in listOfGroups:
+        scoreNameList.append(group.teacherModel.scoreName)
+        for studentModelName in group.studentModels:
+            scoreNameList.append(group.studentModels[studentModelName].scoreName)
+    return scoreNameList
 
 def makePlotsForScores(theDataframe, listOfScores, baseName, nBins=100):
     resultPlots = []
@@ -13,10 +22,12 @@ def makePlotsForScores(theDataframe, listOfScores, baseName, nBins=100):
         if scoreName != 'HT':
             if "teacher" in scoreName:
                 maxScore = 125.0
+            if "Input" in scoreName:
+                maxScore = 7500.0
             else:
                 maxScore = 256.0 # actually 255.99609375
         else:
-            maxScore = 1024.0
+            maxScore = 1500.0
         histName = f'{baseName}_{scoreName}_hist'
         theModel = ROOT.RDF.TH1DModel(
             histName,
@@ -32,55 +43,35 @@ def makePlotsForScores(theDataframe, listOfScores, baseName, nBins=100):
 def main(args):
     # start this nonsense by grabbing all the possible samples, and separate out the data
     mcSampleNames = list(samples.keys())
+    #debug
+    #mcSampleNames = ["ZeroBias", "GluGluHToBB_M-125_TuneCP5_13p6TeV_powheg-pythia8",]
     try:
         mcSampleNames.remove('ZeroBias')
     except ValueError:
         console.log("Failed to find Zero Bias in list of samples and prune it out. Check the samples.", style='red')
         exit(1)
-    #function for calculating HT
-    HTFunction = """
-    try {
-       for(int i = 0; i < L1Upgrade.sumType.size(); ++i){
-          if(L1Upgrade.sumType.at(i) == 1 and L1Upgrade.sumBx.at(i) == 0){
-             return (double) L1Upgrade.sumEt.at(i);
-          }
-       }
-       return 0.0;
-    }
-    catch (const std::runtime_error& e) {
-       return 0.0;
-    }
-    """
+
+    cicadaScoreGroups = [
+        CICADA_vXp2p0_Group,
+        CICADA_vXp2p0N_Group,
+        CICADA_vXp2p1_Group,
+        CICADA_vXp2p1N_Group,
+    ]
+    scoreNames = makeAllScoreNamesFromGroups(cicadaScoreGroups)
+    scoreNames.append(toyHTModel.scoreName)
+    scoreNames.append("anomalyScore")
+    scoreNames.append(CICADAInputScore.scoreName)
+
+    allPlots = []
 
     # Now, let's get the data sample, and prepare even/odd lumi dataframes
     # even lumi: training
     # odd lumi: test
     zeroBiasDataframe = samples['ZeroBias'].getNewDataframe()
-    zeroBiasDataframe = zeroBiasDataframe.Define("HT", HTFunction)
+    zeroBiasDataframe = toyHTModel.applyFrameDefinitions(zeroBiasDataframe)
+    zeroBiasDataframe = CICADAInputScore.applyFrameDefinitions(zeroBiasDataframe)
     evenLumiZBDataframe = zeroBiasDataframe.Filter('lumi % 2 == 0')
     oddLumiZBDataframe = zeroBiasDataframe.Filter('lumi % 2 == 1')
-
-    scoreNames = [
-        'CICADA_v1p2p0_score',
-        'CICADA_v2p2p0_score',
-        'CICADA_vXp2p0_teacher_score',
-
-        'CICADA_v1p2p0N_score',
-        'CICADA_v2p2p0N_score',
-        'CICADA_vXp2p0N_teacher_score',
-        
-        'CICADA_v1p2p1_score',
-        'CICADA_v2p2p1_score',
-        'CICADA_vXp2p1_teacher_score',
-
-        'CICADA_v1p2p1N_score',
-        'CICADA_v2p2p1N_score',
-        'CICADA_vXp2p1N_teacher_score',
-
-        'anomalyScore',
-        'HT'
-    ]
-    allPlots = []
 
     if args.ForROCs:
         nBinsForPlots = 500
@@ -96,7 +87,8 @@ def main(args):
         for sampleName in mcSampleNames:
             theDataframe = samples[sampleName].getNewDataframe()
             console.log(f'{sampleName}: {len(samples[sampleName].listOfFiles):>6d} Files')
-            theDataframe = theDataframe.Define('HT', HTFunction)
+            theDataframe = toyHTModel.applyFrameDefinitions(theDataframe)
+            theDataframe = CICADAInputScore.applyFrameDefinitions(theDataframe)
             allPlots += makePlotsForScores(
                 theDataframe,
                 scoreNames,

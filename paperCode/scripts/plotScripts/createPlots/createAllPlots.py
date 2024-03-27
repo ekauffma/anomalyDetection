@@ -5,6 +5,7 @@ from rich.console import Console
 from rich.table import Table
 import subprocess
 import multiprocessing
+from time import perf_counter
 
 console = Console()
 
@@ -27,9 +28,13 @@ class plotTask():
 
         self.status = plotProcess.returncode
         if plotProcess.returncode != 0:
-            self.errorMessage = plotProcess.stderr
-            #print("Failed with error:")
-            #print(self.errorMessage)
+            self.errorMessage = plotProcess.stdout +'\n\n' + plotProcess.stderr
+            # print("Failed with error:")
+            # print(self.errorMessage)
+            # print("Code:")
+            # print(self.status)
+            # print("Output")
+            # print(plotProcess.stdout)
         resultQueue.put(
             [
                 self.name,
@@ -65,16 +70,23 @@ def main(args):
         teacherStudentPlots,
     ]
 
+    start_time = perf_counter()
     with console.status("Running plots"):
         processes = []
+        console.log("Defining tasks...")
         for task in allTasks:
             processes.append(
                 multiprocessing.Process(target = task.makePlot)
             )
+        console.log("Starting tasks...")
         for process in processes:
             process.start()
+        console.log("Waiting for tasks to complete...")
         for process in processes:
             process.join()
+    end_time = perf_counter()
+    console.log(f"Finished all plots in {end_time-start_time: 8.4g} seconds")
+
     statusTable = Table(title="Plot status")
     statusTable.add_column("Status",no_wrap=True)
     statusTable.add_column("Name", no_wrap=True)
@@ -84,14 +96,19 @@ def main(args):
     #for task in allTasks:
     while not resultQueue.empty():
         result = resultQueue.get()
-        taskName, commmand, status, errorMsg = result[0], result[1], result[2], result[3]
+        taskName, command, status, errorMsg = result[0], result[1], result[2], result[3]
         if status != 0:
             statusString = '[bold red]Failed[/bold red]'
-            console.print(f"Task: \"{task.name}\" failed with message:")
-            console.print(f"{task.errorMessage}")
+            console.print(f"Task: \"{task.name}\" failed")
+            console.print("Command:")
+            console.print(command)
+            console.print("Status:")
+            console.print(status)
+            console.print("Error Message:")
+            console.print(f"{errorMsg}")
         else:
             statusString = '[bold green]Succeeded[/bold green]'
-        statusTable.add_row(statusString, taskName, command, status)
+        statusTable.add_row(statusString, taskName, command, f"{status}")
     console.print(statusTable)
 
 if __name__ =='__main__':
