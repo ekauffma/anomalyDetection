@@ -102,6 +102,35 @@ class HTModel(modelScore):
             self.scoreName,
             self.HTDefinition
         )
+        return frame
+
+class CICADAInputModelScore(modelScore):
+    def __init__(self, scoreName: str, modelName: str):
+        super().__init__(scoreName, modelName)
+    
+    @property
+    def CICADAInputScoreDefinition(self):
+        return """
+        int sum = 0;
+        try {
+           for(int i = 0; i < 18; ++i) {
+              for(int j = 0; j < 14; ++j){
+                 sum += modelInput[i*14+j];
+              }
+           }
+           return sum;
+        }
+        catch (const std::runtime_error& e) {
+           return 0;
+        }
+        """
+
+    def applyFrameDefinitions(self, frame):
+        frame = frame.Define(
+            self.scoreName,
+            self.CICADAInputScoreDefinition
+        )
+        return frame
 
 CICADA_vXp2p0_Group = teacherStudentGroup(
             'CICADA_vXp2p0_teacher_score',
@@ -131,3 +160,5 @@ CICADA_vXp2p1N_Group = teacherStudentGroup(
 )
 
 toyHTModel = HTModel("HT", "HTModel")
+
+CICADAInputScore = CICADAInputModelScore("CICADAInputSum", "CICADAInputSum")
