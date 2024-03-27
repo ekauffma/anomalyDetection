@@ -1,0 +1,11 @@
+Linear shift slope: 214.8427734375
+Linear shift bias: -3.3140740394592285
+
+No random
+linear shift slope: 313.59710693359375
+Linear shift bias: -8.103662490844727
+
+Mixed Random
+[17:39:36] Linear shift slope: 230.28359985351562                                                 trainGADGETv1.py:131
+           Linear shift bias: -3.564307451248169                                                  trainGADGETv1.py:132
+
