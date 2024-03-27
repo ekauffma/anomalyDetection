@@ -16,8 +16,8 @@ import itertools
 
 console = Console()
 
-def drawL1RangeROC(cicadaROC, HTROC, sampleName, backgroundName, cicadaScoreName, outputPath):
-    canvasName = f'{sampleName}_{backgroundName}_{cicadaScoreName}_L1Range'
+def drawL1RangeROC(cicadaROC, referenceROC, sampleName, backgroundName, cicadaScoreName, referenceName, outputPath):
+    canvasName = f'{sampleName}_{backgroundName}_{cicadaScoreName}_{referenceName}_L1Range'
     theCanvas = ROOT.TCanvas(
         canvasName,
         canvasName,
@@ -26,10 +26,10 @@ def drawL1RangeROC(cicadaROC, HTROC, sampleName, backgroundName, cicadaScoreName
     theCanvas.SetLogx()
 
     cicadaROC.SetLineColor(ROOT.kRed)
-    HTROC.SetLineColor(ROOT.kBlack)
+    referenceROC.SetLineColor(ROOT.kBlack)
     
     cicadaROC.SetLineWidth(2)
-    HTROC.SetLineWidth(2)
+    referenceROC.SetLineWidth(2)
 
     maxRate = 100.0
     dummyHistogram = ROOT.TH1D(
@@ -42,7 +42,7 @@ def drawL1RangeROC(cicadaROC, HTROC, sampleName, backgroundName, cicadaScoreName
     dummyHistogram.Draw()
     
     cicadaROC.Draw("L")
-    HTROC.Draw("L")
+    referenceROC.Draw("L")
 
     dummyHistogram.GetXaxis().SetTitle("Overall Rate on Background Events (kHz)")
     dummyHistogram.GetYaxis().SetTitle("Signal Efficiency")
@@ -54,8 +54,8 @@ def drawL1RangeROC(cicadaROC, HTROC, sampleName, backgroundName, cicadaScoreName
         str(outputPath/f"{canvasName}.png")
     )
 
-def drawUnNormalizedROC(cicadaROC, HTROC, sampleName, backgroundName, cicadaScoreName, outputPath):
-    canvasName = f'{sampleName}_{backgroundName}_{cicadaScoreName}'
+def drawUnNormalizedROC(cicadaROC, referenceROC, sampleName, backgroundName, cicadaScoreName, referenceName, outputPath):
+    canvasName = f'{sampleName}_{backgroundName}_{cicadaScoreName}_{referenceName}'
 
     theCanvas = ROOT.TCanvas(
         canvasName,
@@ -63,10 +63,10 @@ def drawUnNormalizedROC(cicadaROC, HTROC, sampleName, backgroundName, cicadaScor
     )
 
     cicadaROC.SetLineColor(ROOT.kRed)
-    HTROC.SetLineColor(ROOT.kBlack)
+    referenceROC.SetLineColor(ROOT.kBlack)
     
     cicadaROC.SetLineWidth(2)
-    HTROC.SetLineWidth(2)
+    referenceROC.SetLineWidth(2)
 
     maxRate = convertEffToRate(1.0)
     dummyHistogram = ROOT.TH1D(
@@ -79,7 +79,7 @@ def drawUnNormalizedROC(cicadaROC, HTROC, sampleName, backgroundName, cicadaScor
     dummyHistogram.Draw()
 
     cicadaROC.Draw("L")
-    HTROC.Draw("L")
+    referenceROC.Draw("L")
 
     dummyHistogram.GetXaxis().SetTitle("Overall Rate on Background Events (kHz)")
     dummyHistogram.GetYaxis().SetTitle("Signal Efficiency")
@@ -90,20 +90,20 @@ def drawUnNormalizedROC(cicadaROC, HTROC, sampleName, backgroundName, cicadaScor
         str(outputPath/f"{canvasName}.png")
     )
 
-def makeROCFromConfig(cicadaScoreName, sampleName, backgroundName, HTName, theFile, outputPath):
+def makeROCFromConfig(cicadaScoreName, sampleName, backgroundName, referenceName, theFile, outputPath):
     sample_cicada = theFile.Get(f"{sampleName}_{cicadaScoreName}_hist").Clone()
     background_cicada = theFile.Get(f"{backgroundName}_{cicadaScoreName}_hist").Clone()
-    sample_HT = theFile.Get(f"{sampleName}_{HTName}_hist").Clone()
-    background_HT = theFile.Get(f"{backgroundName}_{HTName}_hist").Clone()
+    sample_reference = theFile.Get(f"{sampleName}_{referenceName}_hist").Clone()
+    background_reference = theFile.Get(f"{backgroundName}_{referenceName}_hist").Clone()
 
     cicadaROC = makeROCFromHists(background_cicada, sample_cicada)
-    HTROC = makeROCFromHists(background_HT, sample_HT)
+    referenceROC = makeROCFromHists(background_reference, sample_reference)
 
     cicadaROC = convertROCFromEffToRate(cicadaROC)
-    HTROC = convertROCFromEffToRate(HTROC)
+    referenceROC = convertROCFromEffToRate(referenceROC)
 
-    drawUnNormalizedROC(cicadaROC, HTROC, sampleName, backgroundName, cicadaScoreName, outputPath)
-    drawL1RangeROC(cicadaROC, HTROC, sampleName, backgroundName, cicadaScoreName, outputPath)
+    drawUnNormalizedROC(cicadaROC, referenceROC, sampleName, backgroundName, cicadaScoreName, referenceName, outputPath)
+    drawL1RangeROC(cicadaROC, referenceROC, sampleName, backgroundName, cicadaScoreName, referenceName, outputPath)
 
 def makeAllScoreNamesFromGroups(listOfGroups):
     scoreNameList = []
@@ -163,7 +163,11 @@ def main(args):
         CICADA_vXp2p1N_Group,
     ]
     cicadaScoreNames = makeAllScoreNamesFromGroups(cicadaScoreGroups)
-    HTName = toyHTModel.scoreName
+    referenceNames =[
+        toyHTModel.scoreName,
+        CICADAInputScore.scoreName,
+    ]
+
 
     # Okay, for each possible cicada score, sample, and background
     # We need to make a ROC curve
@@ -171,16 +175,18 @@ def main(args):
         itertools.product(
             cicadaScoreNames,
             sampleNames,
-            backgrounds
+            backgrounds,
+            referenceNames,
         )
     )
     console.print(f"# of individual configurations: {len(rocConfigurations):>6d}")
     for config in track(rocConfigurations, description="Drawing ROCs..."):
-        makeROCFromConfig(*config, HTName, theFile, outputPath)
+        makeROCFromConfig(*config, theFile, outputPath)
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Draw Individual ROC plots from score plots")
     
+
     args = parser.parse_args()
     
     main(args)

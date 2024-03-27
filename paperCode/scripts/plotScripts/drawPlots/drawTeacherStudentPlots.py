@@ -9,6 +9,9 @@ from anomalyDetection.anomalyTriggerSkunkworks.utilities.decorators import quiet
 
 console = Console()
 
+def drawColumnNormalizedDeltaScatter(theFile, histoName, yAxisName, outputPath):
+    theCanvas = ROOT.TCanvas(f"{histoName}_canvas", f"{histoName}_Canvas")
+
 def drawDeltaScatter(theFile, histoName, yAxisName, outputPath):
     theCanvas = ROOT.TCanvas(f"{histoName}_Canvas", f"{histoName}_Canvas")
     theHisto = theFile.Get(histoName)

@@ -25,7 +25,7 @@ def main(args):
     
     #console.print(listOfKeys)
     #We need to get a list of the available samples and score hist variables
-    scoreNamePattern = re.compile('(anomalyScore|CICADA_|HT_).*hist(?=$)')
+    scoreNamePattern = re.compile('(anomalyScore|CICADA|HT_).*hist(?=$)')
     def score_matched_substring(s):
         match = scoreNamePattern.search(s)
         return match.group(0) if match else None
@@ -91,7 +91,11 @@ def main(args):
             
             sample.SetLineWidth(4)
             sample.SetLineColor(ROOT.kGreen)
-            sample.Scale(1.0/sample.Integral())
+            try:
+                sample.Scale(1.0/sample.Integral())
+            except ZeroDivisionError:
+                sample.Scale(0.0)
+                console.log(f"Got a zero division for score: {score} and sample: {sampleName}")
 
             theCanvas = ROOT.TCanvas(f'{sampleName}_canvas', f'{sampleName}_canvas', 1400, 1000)
             theCanvas.Divide(1,3)
