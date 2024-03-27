@@ -145,6 +145,7 @@ treeNames = [
     'l1EventTree/L1EventTree',
     #'l1CaloTowerEmuTree/L1CaloTowerTree',
     'l1UpgradeTree/L1UpgradeTree',
+    #'CICADAInputNtuplizer/CICADAInputTree',
 
     'CICADA_v1p2p0_Ntuplizer/CICADA_v1p2p0',
     'CICADA_v2p2p0_Ntuplizer/CICADA_v2p2p0',
