@@ -111,3 +111,75 @@ CICADA_vXp2p1N_Teacher_Ntuplizer = cms.EDAnalyzer(
     modelLocation = cms.string("/src/anomalyDetection/paperCode/data/models/mc_models_noiseSuppressed_26Feb2024/teacher/"),
     noiseSuppressionLevel = cms.int32(5),
 )
+
+# x.2.2
+CICADA_v1p2p2_Ntuplizer = cms.EDAnalyzer(
+    'kerasCICADAModelNtuplizer',
+    regionToken = cms.InputTag("simCaloStage2Layer1Digis"),
+    branchName = cms.string("CICADA_v1p2p2_score"),
+    treeName = cms.string("CICADA_v1p2p2"),
+    modelLocation = cms.string("/src/anomalyDetection/paperCode/data/models/data_models_27Mar2024/cicada-v1/"),
+)
+
+CICADA_v2p2p2_Ntuplizer = cms.EDAnalyzer(
+    'kerasCICADAModelNtuplizer',
+    regionToken = cms.InputTag("simCaloStage2Layer1Digis"),
+    branchName = cms.string("CICADA_v2p2p2_score"),
+    treeName = cms.string("CICADA_v2p2p2"),
+    modelLocation = cms.string("/src/anomalyDetection/paperCode/data/models/data_models_27Mar2024/cicada-v2/")    ,
+)
+
+# x.2.2 teacher
+CICADA_vXp2p2_Teacher_Ntuplizer = cms.EDAnalyzer(
+    'kerasCICADATeacherModelNtuplizer',
+    regionToken = cms.InputTag("simCaloStage2Layer1Digis"),
+    branchName = cms.string("CICADA_vXp2p2_teacher_score"),
+    treeName = cms.string("CICADA_vXp2p2_teacher"),
+    modelLocation = cms.string("/src/anomalyDetection/paperCode/data/models/data_models_27Mar2024/teacher/"),
+)
+
+# x.2.2N
+CICADA_v1p2p2N_Ntuplizer = cms.EDAnalyzer(
+    'kerasCICADAModelNtuplizer',
+    regionToken = cms.InputTag("simCaloStage2Layer1Digis"),
+    branchName = cms.string("CICADA_v1p2p2N_score"),
+    treeName = cms.string("CICADA_v1p2p2N"),
+    modelLocation = cms.string("/src/anomalyDetection/paperCode/data/models/mc_models_27Mar2024/cicada-v1/"),
+)
+
+CICADA_v2p2p2N_Ntuplizer = cms.EDAnalyzer(
+    'kerasCICADAModelNtuplizer',
+    regionToken = cms.InputTag("simCaloStage2Layer1Digis"),
+    branchName = cms.string("CICADA_v2p2p2N_score"),
+    treeName = cms.string("CICADA_v2p2p2N"),
+    modelLocation = cms.string("/src/anomalyDetection/paperCode/data/models/mc_models_27Mar2024/cicada-v2/"),
+)
+
+# x.2.2N teacher
+CICADA_vXp2p2N_Teacher_Ntuplizer = cms.EDAnalyzer(
+    'kerasCICADATeacherModelNtuplizer',
+    regionToken = cms.InputTag("simCaloStage2Layer1Digis"),
+    branchName = cms.string("CICADA_vXp2p2N_teacher_score"),
+    treeName = cms.string("CICADA_vXp2p2N_teacher"),
+    modelLocation = cms.string("/src/anomalyDetection/paperCode/data/models/mc_models_27Mar2024/teacher/"),
+)
+
+# GADGET v1.0.0 Model
+GADGET_v1p0p0_Ntuplizer = cms.EDAnalyzer(
+    'kerasCICADAModelNtuplizer',
+    regionToken = cms.InputTag("simCaloStage2Layer1Digis"),
+    branchName = cms.string("GADGET_v1p0p0_score"),
+    treeName = cms.string("GADGET_v1p0p0"),
+    inputLayerName = cms.string("serving_default_cicada_v1_input:0"),
+    modelLocation = cms.string("/src/anomalyDetection/paperCode/data/models/data_models_GADGET_27Mar2024/cicada_v1/"),
+)
+
+# GADGET v1 Teacher
+GADGET_v1p0p0_Teacher_Ntuplizer = cms.EDAnalyzer(
+    'kerasCICADATeacherModelNtuplizer',
+    regionToken = cms.InputTag("simCaloStage2Layer1Digis"),
+    branchName = cms.string("GADGET_v1p0p0_Teacher_score"),
+    treeName = cms.string("GADGET_v1p0p0_Teacher"),
+    teacherInputLayerName = cms.string("serving_default_teacher_input:0"),
+    modelLocation = cms.string("/src/anomalyDetection/paperCode/data/models/data_models_GADGET_27Mar2024/teacher/")
+)

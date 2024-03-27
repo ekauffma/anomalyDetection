@@ -116,36 +116,42 @@ process.CICADAv1p1p0Ntuplizer = L1TCaloSummaryTestNtuplizer.clone(
     scoreSource = cms.InputTag("L1TCaloSummaryCICADAv1p1p0", "CICADAScore"),
     ecalToken = cms.InputTag('simEcalTriggerPrimitiveDigis'),
     hcalToken = cms.InputTag('simHcalTriggerPrimitiveDigis'),
+    outputScoreName = cms.string('CICADA_v1p1p0'),
     includePUInfo = cms.bool(False),   
 )
 process.CICADAv2p1p0Ntuplizer = L1TCaloSummaryTestNtuplizer.clone(
     scoreSource = cms.InputTag("L1TCaloSummaryCICADAv2p1p0", "CICADAScore"),
     ecalToken = cms.InputTag('simEcalTriggerPrimitiveDigis'),
     hcalToken = cms.InputTag('simHcalTriggerPrimitiveDigis'),
+    outputScoreName = cms.string('CICADA_v2p1p0'),
     includePUInfo = cms.bool(False),   
 )
 process.CICADAv1p1p1Ntuplizer = L1TCaloSummaryTestNtuplizer.clone(
     scoreSource = cms.InputTag("L1TCaloSummaryCICADAv1p1p1", "CICADAScore"),
     ecalToken = cms.InputTag('simEcalTriggerPrimitiveDigis'),
     hcalToken = cms.InputTag('simHcalTriggerPrimitiveDigis'),
+    outputScoreName = cms.string('CICADA_v1p1p1'),
     includePUInfo = cms.bool(False),   
 )
 process.CICADAv2p1p1Ntuplizer = L1TCaloSummaryTestNtuplizer.clone(
     scoreSource = cms.InputTag("L1TCaloSummaryCICADAv2p1p1", "CICADAScore"),
     ecalToken = cms.InputTag('simEcalTriggerPrimitiveDigis'),
     hcalToken = cms.InputTag('simHcalTriggerPrimitiveDigis'),
+    outputScoreName = cms.string('CICADA_v2p1p1'),
     includePUInfo = cms.bool(False),   
 )
 process.CICADAv1p1p2Ntuplizer = L1TCaloSummaryTestNtuplizer.clone(
     scoreSource = cms.InputTag("L1TCaloSummaryCICADAv1p1p2", "CICADAScore"),
     ecalToken = cms.InputTag('simEcalTriggerPrimitiveDigis'),
     hcalToken = cms.InputTag('simHcalTriggerPrimitiveDigis'),
+    outputScoreName = cms.string('CICADA_v1p1p2'),
     includePUInfo = cms.bool(False),   
 )
 process.CICADAv2p1p2Ntuplizer = L1TCaloSummaryTestNtuplizer.clone(
     scoreSource = cms.InputTag("L1TCaloSummaryCICADAv2p1p2", "CICADAScore"),
     ecalToken = cms.InputTag('simEcalTriggerPrimitiveDigis'),
     hcalToken = cms.InputTag('simHcalTriggerPrimitiveDigis'),
+    outputScoreName = cms.string('CICADA_v2p1p2'),
     includePUInfo = cms.bool(False),   
 )
 process.load("anomalyDetection.paperCode.CICADAInputNtuplizer_cfi")
@@ -169,7 +175,20 @@ process.kerasModelsSequence = cms.Sequence(
 
     process.CICADA_v1p2p1N_Ntuplizer +
     process.CICADA_v2p2p1N_Ntuplizer +
-    process.CICADA_vXp2p1N_Teacher_Ntuplizer
+    process.CICADA_vXp2p1N_Teacher_Ntuplizer +
+
+    process.CICADA_v1p2p2_Ntuplizer +
+    process.CICADA_v2p2p2_Ntuplizer +
+    process.CICADA_vXp2p2_Teacher_Ntuplizer +
+    
+    process.CICADA_v1p2p2N_Ntuplizer +
+    process.CICADA_v2p2p2N_Ntuplizer +
+    process.CICADA_vXp2p2N_Teacher_Ntuplizer
+)
+
+process.gadgetModelsSequence = cms.Sequence(
+    process.GADGET_v1p0p0_Ntuplizer +
+    process.GADGET_v1p0p0_Teacher_Ntuplizer
 )
 
 process.NtuplePath = cms.Path(
@@ -181,7 +200,8 @@ process.NtuplePath = cms.Path(
     process.CICADAv2p1p2Ntuplizer +
     process.L1TTriggerBitsNtuplizer +
     process.CICADAInputNtuplizer +
-    process.kerasModelsSequence
+    process.kerasModelsSequence +
+    process.gadgetModelsSequence
 )
 
 process.schedule.append(process.NtuplePath)

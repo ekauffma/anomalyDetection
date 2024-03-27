@@ -53,6 +53,7 @@ private:
 
   edm::Service<TFileService> theFileService;
   TTree* triggerTree;
+  std::string teacherInputLayerName;
 };
 
 kerasCICADATeacherModelNtuplizer::kerasCICADATeacherModelNtuplizer(const edm::ParameterSet& iConfig):
@@ -62,6 +63,8 @@ kerasCICADATeacherModelNtuplizer::kerasCICADATeacherModelNtuplizer(const edm::Pa
 {
   usesResource("TFileService");
   
+  teacherInputLayerName = iConfig.exists("teacherInputLayerName") ? iConfig.getParameter<std::string>("teacherInputLayerName"): "serving_default_teacher_inputs_:0";
+
   std::string fullPathToModel(std::getenv("CMSSW_BASE"));
   fullPathToModel.append(iConfig.getParameter<std::string>("modelLocation"));
 
@@ -104,7 +107,7 @@ void kerasCICADATeacherModelNtuplizer::analyze(const edm::Event& iEvent, const e
     }
 
   std::vector<tensorflow::Tensor> tensorOutput;
-  tensorflow::run(session, {{"serving_default_teacher_inputs_:0", modelInput}}, {"StatefulPartitionedCall:0"}, &tensorOutput);
+  tensorflow::run(session, {{teacherInputLayerName.c_str(), modelInput}}, {"StatefulPartitionedCall:0"}, &tensorOutput);
 
   tensorflow::Tensor resultTensor = tensorOutput.at(0);
   for (const L1CaloRegion& theRegion: *regions)
@@ -135,6 +138,7 @@ void kerasCICADATeacherModelNtuplizer::fillDescriptions(edm::ConfigurationDescri
   desc.add<std::string>("treeName");
   desc.add<std::string>("modelLocation");
   desc.addOptional<int>("noiseSuppressionLevel");
+  desc.addOptional<std::string>("teacherInputLayerName");
   descriptions.add("kerasCICADATeacherModelNtuplizer", desc);
 }
 

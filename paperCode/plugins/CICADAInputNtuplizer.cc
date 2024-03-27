@@ -33,8 +33,8 @@ class CICADAInputNtuplizer : public edm::one::EDAnalyzer< edm::one::SharedResour
 
         edm::EDGetTokenT<L1CaloRegionCollection> regionsToken;
         int modelInput[18][14];
-        bool tauBits[18][14];
-        bool egBits[18][14];
+        unsigned short int tauBits[18][14];
+        unsigned short int egBits[18][14];
 
         edm::Service<TFileService> theFileService;
         TTree* triggerTree;
@@ -56,8 +56,8 @@ void CICADAInputNtuplizer::analyze(const edm::Event& iEvent, const edm::EventSet
     iEvent.getByToken(regionsToken, emuRegions);
     for(const L1CaloRegion& theRegion: *emuRegions)
     {
-        tauBits[theRegion.gctPhi()][theRegion.gctEta()-4] = theRegion.tauVeto();
-        egBits[theRegion.gctPhi()][theRegion.gctEta()-4] = theRegion.overFlow();
+      tauBits[theRegion.gctPhi()][theRegion.gctEta()-4] = (unsigned short int) theRegion.tauVeto();
+      egBits[theRegion.gctPhi()][theRegion.gctEta()-4] = (unsigned short int) theRegion.overFlow();
         modelInput[theRegion.gctPhi()][theRegion.gctEta()-4] = theRegion.et();
     }
     triggerTree->Fill();

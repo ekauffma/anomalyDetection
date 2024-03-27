@@ -53,6 +53,7 @@ private:
   edm::Service<TFileService> theFileService;  
   TTree* triggerTree;
 
+  std::string inputLayerName;
 };
 
 kerasCICADAModelNtuplizer::kerasCICADAModelNtuplizer(const edm::ParameterSet& iConfig):
@@ -62,6 +63,7 @@ kerasCICADAModelNtuplizer::kerasCICADAModelNtuplizer(const edm::ParameterSet& iC
 {
   usesResource("TFileService");
 
+  inputLayerName = iConfig.exists("inputLayerName") ? iConfig.getParameter<std::string>("inputLayerName"): "serving_default_inputs_:0";
   std::string fullPathToModel(std::getenv("CMSSW_BASE"));
   fullPathToModel.append(iConfig.getParameter<std::string>("modelLocation"));
   // FileInPath doesn't like directories...
@@ -108,7 +110,7 @@ void kerasCICADAModelNtuplizer::analyze(const edm::Event& iEvent, const edm::Eve
     }
 
   std::vector<tensorflow::Tensor> tensorOutput;
-  tensorflow::run(session, {{"serving_default_inputs_:0", modelInput}}, {"StatefulPartitionedCall:0"}, &tensorOutput);
+  tensorflow::run(session, {{inputLayerName.c_str(), modelInput}}, {"StatefulPartitionedCall:0"}, &tensorOutput);
 
   modelOutput = tensorOutput[0].matrix<float>()(0, 0);
 
@@ -121,6 +123,7 @@ void kerasCICADAModelNtuplizer::fillDescriptions(edm::ConfigurationDescriptions&
   desc.add<std::string>("branchName");
   desc.add<std::string>("treeName");
   desc.add<std::string>("modelLocation");
+  desc.addOptional<std::string>("inputLayerName");
   desc.addOptional<int>("noiseSuppressionLevel");
   descriptions.add("kerasCICADAModelNtuplizer", desc);
 }
