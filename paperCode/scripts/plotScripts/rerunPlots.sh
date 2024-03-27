@@ -6,4 +6,4 @@ PLOTDIRECTORY="paperCode/scripts/plotScripts"
 python3 $PLOTDIRECTORY/createPlots/createAllPlots.py
 
 #draw them
-sh $PLOTDIRECTORY/drawPlots/drawAllPlots.hs
+sh $PLOTDIRECTORY/drawPlots/drawAllPlots.sh
