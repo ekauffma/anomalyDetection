@@ -56,6 +56,11 @@ class drawPlotTask(ABC):
         self.dictOfFiles = dictOfFiles
         self.outputPath = outputPath
 
+    def executeTask(self):
+        self.outputPath.mkdir(exist_ok=True, parents=True)
+        self.drawPlots()
+        
+
     @abstractmethod
     def drawPlots(self):
         pass
