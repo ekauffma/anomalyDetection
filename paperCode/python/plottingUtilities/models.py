@@ -5,6 +5,18 @@ class modelScore():
         self.scoreName = scoreName
         self.modelName = modelName
 
+class computedModelScore(modelScore):
+    def __init__(self, scoreName: str, modelName: str, scoreDefinition: str):
+        super().__init__(scoreName, modelName)
+        self.scoreDefinition = scoreDefinition
+
+    def applyFrameDefinitions(self, frame):
+        frame = frame.Define(
+            self.scoreName,
+            self.scoreDefinition,
+        )
+        return frame
+
 class teacherStudentPair():
     def __init__(self, teacherScoreName: str, studentScoreName: str, teacherName:str, studentName:str):
         self.teacherModel = modelScore(teacherScoreName, teacherName)
@@ -76,62 +88,12 @@ class teacherStudentGroup():
         for theTeacherStudentPair in self.teacherStudentPairs:
             frame = theTeacherStudentPair.applyFrameDefinitions(frame)
         return frame
+
+class GADGETTeacherStudentGroup(teacherStudentGroup):
+    @property
+    def adjustedTeacherScoreDefinition(self):
+        return f"313.597*{self.teacherModel.scoreName}-8.103"
         
-class HTModel(modelScore):
-    def __init__(self, scoreName: str, modelName: str):
-        super().__init__(scoreName, modelName)
-    
-    @property
-    def HTDefinition(self):
-        return """
-        try {
-        for(int i = 0; i < L1Upgrade.sumType.size(); ++i){
-           if(L1Upgrade.sumType.at(i) == 1 and L1Upgrade.sumBx.at(i) == 0){
-              return (double) L1Upgrade.sumEt.at(i);
-           }
-        }
-        return 0.0;
-        }
-        catch (const std::runtime_error& e) {
-           return 0.0;
-        }
-        """
-
-    def applyFrameDefinitions(self, frame):
-        frame = frame.Define(
-            self.scoreName,
-            self.HTDefinition
-        )
-        return frame
-
-class CICADAInputModelScore(modelScore):
-    def __init__(self, scoreName: str, modelName: str):
-        super().__init__(scoreName, modelName)
-    
-    @property
-    def CICADAInputScoreDefinition(self):
-        return """
-        int sum = 0;
-        try {
-           for(int i = 0; i < 18; ++i) {
-              for(int j = 0; j < 14; ++j){
-                 sum += modelInput[i*14+j];
-              }
-           }
-           return sum;
-        }
-        catch (const std::runtime_error& e) {
-           return 0;
-        }
-        """
-
-    def applyFrameDefinitions(self, frame):
-        frame = frame.Define(
-            self.scoreName,
-            self.CICADAInputScoreDefinition
-        )
-        return frame
-
 CICADA_vXp2p0_Group = teacherStudentGroup(
             'CICADA_vXp2p0_teacher_score',
             ['CICADA_v1p2p0_score', 'CICADA_v2p2p0_score'],
@@ -158,7 +120,80 @@ CICADA_vXp2p1N_Group = teacherStudentGroup(
             'vXp2p1N',
             ['v1p2p1N', 'v2p2p1N'],
 )
+CICADA_vXp2p2_Group = teacherStudentGroup(
+            'CICADA_vXp2p2_teacher_score',
+            ['CICADA_v1p2p2_score', 'CICADA_v2p2p2_score'],
+            'vXp2p2',
+            ['v1p2p2', 'v2p2p2'],
+)
 
-toyHTModel = HTModel("HT", "HTModel")
+CICADA_vXp2p2N_Group = teacherStudentGroup(
+            'CICADA_vXp2p2N_teacher_score',
+            ['CICADA_v1p2p2N_score', 'CICADA_v2p2p2N_score'],
+            'vXp2p2N',
+            ['v1p2p2N', 'v2p2p2N'],
+)
 
-CICADAInputScore = CICADAInputModelScore("CICADAInputSum", "CICADAInputSum")
+GADGET_v1p0p0_Group = GADGETTeacherStudentGroup(
+    'GADGET_v1p0p0_Teacher_score',
+    ['GADGET_v1p0p0_score'],
+    'GADGET_v1p0p0_teacher',
+    ['GADGET_v1p0p0'],
+)
+
+toyHTModel = computedModelScore(
+    "HT", 
+    "HTModel",
+    """
+        try {
+        for(int i = 0; i < L1Upgrade.sumType.size(); ++i){
+           if(L1Upgrade.sumType.at(i) == 1 and L1Upgrade.sumBx.at(i) == 0){
+              return (double) L1Upgrade.sumEt.at(i);
+           }
+        }
+        return 0.0;
+        }
+        catch (const std::runtime_error& e) {
+           return 0.0;
+        }
+    """
+)
+
+CICADAInputScore = computedModelScore(
+    "CICADAInputSum", 
+    "CICADAInputSum",
+    """
+        int sum = 0;
+        try {
+           for(int i = 0; i < 18; ++i) {
+              for(int j = 0; j < 14; ++j){
+                 sum += modelInput[i*14+j];
+              }
+           }
+           return sum;
+        }
+        catch (const std::runtime_error& e) {
+           return 0;
+        }
+    """
+)
+
+recomputedHT = computedModelScore(
+    "recomputedHT",
+    "recomputedHT",
+    """
+    float HT = 0;
+    try{
+       for (int i = 0; i < L1Upgrade.nJets; +=i) {
+          if(L1Upgrade.jetEt.at(i) < 30.0 || std::abs(L1Upgrade.jetEta.at(i)) >= 2.4 || L1Upgrade.jetBx.at(i) != 0) {
+             continue;
+          }
+          HT += L1Upgrade.jetEt.at(i);
+       }
+       return HT;
+    }
+    catch (const std::runtime_error& e) {
+       return 0.0;
+    }
+    """
+)
