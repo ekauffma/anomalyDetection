@@ -1,11 +1,9 @@
 import ROOT
 import argparse
-from anomalyDetection.paperCode.samples.paperSampleBuilder import samples
+from anomalyDetection.paperCode.samples.paperSampleBuilder import reducedSamples as samples
 from anomalyDetection.paperCode.plottingUtilities.models import *
 from rich.console import Console
-from rich.progress import track
-import os
-import pathlib
+from pathlib import Path
 
 console = Console()
 
@@ -166,38 +164,60 @@ def main(args):
     sampleNames = list(samples.keys())
     #debug
     #sampleNames = sampleNames[:1]
-    dataFrames = dict(
-        [
-            (sampleName, samples[sampleName].getNewDataframe()) for sampleName in sampleNames
-        ]
-    )
+    # dataFrames = dict(
+    #     [
+    #         (sampleName, samples[sampleName].getNewDataframe()) for sampleName in sampleNames
+    #     ]
+    # )
 
     teacherStudentModels = [
         CICADA_vXp2p0_Group,
         CICADA_vXp2p0N_Group,
         CICADA_vXp2p1_Group,
         CICADA_vXp2p1N_Group,
+        CICADA_vXp2p2_Group,
+        CICADA_vXp2p2N_Group,
+        GADGET_v1p0p0_Group,
     ]
     
-    plots = []
-    for sampleName in track(dataFrames, description="Deriving values and booking plots..."):
-        frame = dataFrames[sampleName]
+    # 
+    # Too many files open errors
+    #
+    # plots = []
+    # for sampleName in track(dataFrames, description="Deriving values and booking plots..."):
+    #     frame = dataFrames[sampleName]
+    #     for teacherStudentModel in teacherStudentModels:
+    #         frame = teacherStudentModel.applyFrameDefinitions(frame)
+
+    #     plots += bookPlots(frame, sampleName, teacherStudentModels)
+
+    # plotOutputLocation = pathlib.Path('/nfs_scratch/aloeliger/PaperPlotFiles/PlotFiles')
+    # plotOutputLocation.mkdir(parents=True, exist_ok=True)
+    # outputFileName = plotOutputLocation/'TeacherStudentPlots.root'
+    # console.log(f"Saving to {outputFileName}")
+    
+    # theOutputFile = ROOT.TFile(str(outputFileName), 'RECREATE')
+    # for plot in track(plots, description="Writing plots"):
+    #     plot.Write()
+    # theOutputFile.Write()
+    # theOutputFile.Close()
+    # console.log(f'[bold green]\[Done][/bold green] Writing files')
+    plotOutputLocation = Path('/nfs_scratch/aloeliger/PaperPlotFiles/PlotFiles/')
+    plotOutputLocation.mkdir(parents=True, exist_ok = True)
+    outputPath = plotOutputLocation / 'TeacherStudentPlots.root'
+    theOutputFile = ROOT.TFile(str(outputPath), 'RECREATE')
+
+    for sampleName in sampleNames:
+        console.log(f"{sampleName}: {len(samples[sampleName].listOfFiles):>6d} Files")
+        frame = samples[sampleName].getNewDataframe()
         for teacherStudentModel in teacherStudentModels:
             frame = teacherStudentModel.applyFrameDefinitions(frame)
-
-        plots += bookPlots(frame, sampleName, teacherStudentModels)
-
-    plotOutputLocation = pathlib.Path('/nfs_scratch/aloeliger/PaperPlotFiles/PlotFiles')
-    plotOutputLocation.mkdir(parents=True, exist_ok=True)
-    outputFileName = plotOutputLocation/'TeacherStudentPlots.root'
-    console.log(f"Saving to {outputFileName}")
-    
-    theOutputFile = ROOT.TFile(str(outputFileName), 'RECREATE')
-    for plot in track(plots, description="Writing plots"):
-        plot.Write()
+        plots = bookPlots(frame, sampleName, teacherStudentModels)
+        for plot in plots:
+            plot.Write()
+        del frame
     theOutputFile.Write()
     theOutputFile.Close()
-    console.log(f'[bold green]\[Done][/bold green] Writing files')
     
         
 if __name__ == '__main__':

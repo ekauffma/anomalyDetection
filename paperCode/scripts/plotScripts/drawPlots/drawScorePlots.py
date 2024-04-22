@@ -25,7 +25,7 @@ def main(args):
     
     #console.print(listOfKeys)
     #We need to get a list of the available samples and score hist variables
-    scoreNamePattern = re.compile('(anomalyScore|CICADA|HT_).*hist(?=$)')
+    scoreNamePattern = re.compile('(GADGET|CICADA|HT_).*hist(?=$)')
     def score_matched_substring(s):
         match = scoreNamePattern.search(s)
         return match.group(0) if match else None
@@ -35,7 +35,7 @@ def main(args):
     scoreNames = list(np.unique(scoreNames))
     console.print(scoreNames)
 
-    samplePattern = re.compile('.*(?=_(anomalyScore|CICADA|HT))')
+    samplePattern = re.compile('.*(?=_(GADGET|CICADA|HT))')
     def sample_matched_substring(s):
         match = samplePattern.search(s)
         return match.group(0) if match else None
@@ -86,7 +86,8 @@ def main(args):
 
         TrainZeroBias.SetTitle("")
 
-        for sampleName in track(sampleNames, description="Saving samples"):
+        for sampleName in tracksampleNames:
+            console.log(f'{sampleName} {score}')
             sample = theFile.Get(f'{sampleName}_{score}')
             
             sample.SetLineWidth(4)

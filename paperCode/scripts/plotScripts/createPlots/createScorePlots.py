@@ -1,9 +1,10 @@
 import ROOT
 import argparse
 from anomalyDetection.paperCode.plottingUtilities.models import *
-from anomalyDetection.paperCode.samples.paperSampleBuilder import samples
+from anomalyDetection.paperCode.samples.paperSampleBuilder import reducedSamples as samples
 from rich.console import Console
 import os
+from pathlib import Path
 
 console = Console()
 
@@ -56,13 +57,14 @@ def main(args):
         CICADA_vXp2p0N_Group,
         CICADA_vXp2p1_Group,
         CICADA_vXp2p1N_Group,
+        CICADA_vXp2p2_Group,
+        CICADA_vXp2p2N_Group,
+        GADGET_v1p0p0_Group,
     ]
     scoreNames = makeAllScoreNamesFromGroups(cicadaScoreGroups)
     scoreNames.append(toyHTModel.scoreName)
-    scoreNames.append("anomalyScore")
+    scoreNames.append("CICADA_v2p1p2")
     scoreNames.append(CICADAInputScore.scoreName)
-
-    allPlots = []
 
     # Now, let's get the data sample, and prepare even/odd lumi dataframes
     # even lumi: training
@@ -78,40 +80,75 @@ def main(args):
     else:
         nBinsForPlots = 100
 
-    allPlots += makePlotsForScores(evenLumiZBDataframe, scoreNames, 'Train_ZeroBias', nBinsForPlots)
-    allPlots += makePlotsForScores(oddLumiZBDataframe, scoreNames, 'Test_ZeroBias', nBinsForPlots)
+    zeroBiasPlots = []
+    zeroBiasPlots += makePlotsForScores(evenLumiZBDataframe, scoreNames, 'Train_ZeroBias', nBinsForPlots)
+    zeroBiasPlots += makePlotsForScores(oddLumiZBDataframe, scoreNames, 'Test_ZeroBias', nBinsForPlots)
     console.log(f'Zero Bias: {len(samples["ZeroBias"].listOfFiles):>6d} Files')
 
-    mcDataframes = []
-    with console.status("Running through samples..."):
-        for sampleName in mcSampleNames:
-            theDataframe = samples[sampleName].getNewDataframe()
-            console.log(f'{sampleName}: {len(samples[sampleName].listOfFiles):>6d} Files')
-            theDataframe = toyHTModel.applyFrameDefinitions(theDataframe)
-            theDataframe = CICADAInputScore.applyFrameDefinitions(theDataframe)
-            allPlots += makePlotsForScores(
-                theDataframe,
-                scoreNames,
-                sampleName,
-                nBins = nBinsForPlots,
-            )
-            mcDataframes.append(theDataframe)
-    console.log('[bold green]\[Done][/bold green] Logging all plots to be made.')
+    #
+    # This runs into issues with too many open files
+    #
+    # mcDataframes = []
+    # with console.status("Running through samples..."):
+    #     for sampleName in mcSampleNames:
+    #         theDataframe = samples[sampleName].getNewDataframe()
+    #         console.log(f'{sampleName}: {len(samples[sampleName].listOfFiles):>6d} Files')
+    #         theDataframe = toyHTModel.applyFrameDefinitions(theDataframe)
+    #         theDataframe = CICADAInputScore.applyFrameDefinitions(theDataframe)
+    #         allPlots += makePlotsForScores(
+    #             theDataframe,
+    #             scoreNames,
+    #             sampleName,
+    #             nBins = nBinsForPlots,
+    #         )
+    #         mcDataframes.append(theDataframe)
+    # console.log('[bold green]\[Done][/bold green] Logging all plots to be made.')
 
-    # set-up an output location for all the plots that this is going to 
-    plotOutputLocation = '/nfs_scratch/aloeliger/PaperPlotFiles/PlotFiles/'
-    os.makedirs(plotOutputLocation, exist_ok=True)
+    # # set-up an output location for all the plots that this is going to 
+    # plotOutputLocation = '/nfs_scratch/aloeliger/PaperPlotFiles/PlotFiles/'
+    # os.makedirs(plotOutputLocation, exist_ok=True)
+    # if args.ForROCs:
+    #     outputFileName = 'scorePlotsForROCs.root'
+    # else:
+    #     outputFileName = 'scorePlots.root'
+    # outputFileName = os.path.join(plotOutputLocation, outputFileName)
+    # theOutputFile = ROOT.TFile(outputFileName, 'RECREATE')
+    # with console.status('Writing plot file...'):
+    #     for plot in allPlots:
+    #         plot.Write()
+    #     theOutputFile.Write()
+    #     theOutputFile.Close()
+    # console.log(f'[bold green]\[Done][/bold green] Writing files')
+    plotOutputLocation = Path('/nfs_scratch/aloeliger/PaperPlotFiles/PlotFiles/')
+    plotOutputLocation.mkdir(parents=True, exist_ok=True)
     if args.ForROCs:
         outputFileName = 'scorePlotsForROCs.root'
     else:
         outputFileName = 'scorePlots.root'
-    outputFileName = os.path.join(plotOutputLocation, outputFileName)
-    theOutputFile = ROOT.TFile(outputFileName, 'RECREATE')
-    with console.status('Writing plot file...'):
-        for plot in allPlots:
+    finalPath = plotOutputLocation/outputFileName
+    theOutputFile = ROOT.TFile(str(finalPath), 'RECREATE')
+
+    for plot in zeroBiasPlots:
+        plot.Write()
+    del evenLumiZBDataframe
+    del oddLumiZBDataframe
+    
+    for sampleName in mcSampleNames:
+        theDataframe = samples[sampleName].getNewDataframe()
+        console.log(f'{sampleName}: {len(samples[sampleName].listOfFiles):>6d} Files')
+        theDataframe = toyHTModel.applyFrameDefinitions(theDataframe)
+        theDataframe = CICADAInputScore.applyFrameDefinitions(theDataframe)
+        thePlots = makePlotsForScores(
+            theDataframe,
+            scoreNames,
+            sampleName,
+            nBins = nBinsForPlots
+        )
+        for plot in thePlots:
             plot.Write()
-        theOutputFile.Write()
-        theOutputFile.Close()
+        del theDataframe
+    theOutputFile.Write()
+    theOutputFile.Close()
     console.log(f'[bold green]\[Done][/bold green] Writing files')
 
 if __name__ == '__main__':

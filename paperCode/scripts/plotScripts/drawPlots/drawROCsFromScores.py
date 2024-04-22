@@ -15,7 +15,7 @@ def loadPlotSuite(theFile, sampleName):
     sample_CICADA_1p2p0N = theFile.Get(f'{sampleName}_CICADA_v1p2p0N_score_hist')
     sample_CICADA_2p2p0 = theFile.Get(f'{sampleName}_CICADA_v2p2p0_score_hist')
     sample_CICADA_2p2p0N = theFile.Get(f'{sampleName}_CICADA_v2p2p0N_score_hist')
-    sample_anomalyScore = theFile.Get(f'{sampleName}_anomalyScore_hist')
+    sample_anomalyScore = theFile.Get(f'{sampleName}_CICADA_v2p1p2_hist')
     sample_HT = theFile.Get(f'{sampleName}_HT_hist')
     return sample_CICADA_1p2p0, sample_CICADA_2p2p0, sample_CICADA_1p2p0N, sample_CICADA_2p2p0N, sample_anomalyScore, sample_HT
 
@@ -84,7 +84,7 @@ def main(args):
         'HT_hist',
     ]
 
-    samplePattern = re.compile('.*(?=_(anomalyScore|CICADA|HT))')
+    samplePattern = re.compile('.*(?=_(GADGET|CICADA|HT))')
     def sample_matched_substring(s):
         match = samplePattern.search(s)
         return match.group(0) if match else None
@@ -119,7 +119,8 @@ def main(args):
     
     for backgroundName in backgroundNames:
         background_CICADA_1p2p0, background_CICADA_2p2p0, background_CICADA_1p2p0N, background_CICADA_2p2p0N, background_anomalyScore, background_HT = loadPlotSuite(theFile, backgroundName)
-        for sampleName in track(sampleNames, description="Samples"):
+        for sampleName in sampleNames:
+            console.log(f'{backgroundName} {sampleName}')
             canvasName = f'{sampleName}_{backgroundName}'
             theCanvas = ROOT.TCanvas(
                 canvasName,

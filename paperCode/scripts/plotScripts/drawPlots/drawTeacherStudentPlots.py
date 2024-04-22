@@ -60,17 +60,26 @@ def drawErrorPlot(theFile, histoName, xAxisName, outputPath):
 def drawAllDeltaScatters(theFile, listOfRelevantKeys, yAxisName, outputPath):
     console.log(f"Number of delta scatters: {len(listOfRelevantKeys):>6d}")
     for keyName in track(listOfRelevantKeys, description="Drawing delta scatters."):
-        drawDeltaScatter(theFile, keyName, yAxisName, outputPath)
+        try:
+            drawDeltaScatter(theFile, keyName, yAxisName, outputPath)
+        except:
+            console.log(f':warning-emoji: {keyName} failed')
 
 def drawAllScorePlots(theFile, listOfRelevantKeys, xAxisName, outputPath):
     console.log(f"Number of score plots: {len(listOfRelevantKeys):>6d}")
     for keyName in track(listOfRelevantKeys, description="Drawing score plots"):
-        drawScorePlot(theFile, keyName, xAxisName, outputPath)
-
+        try:
+            drawScorePlot(theFile, keyName, xAxisName, outputPath)
+        except:
+            console.log(f':warning-emoji: {keyName} failed')
+        
 def drawAllErrorPlots(theFile, listOfRelevantKeys, xAxisName, outputPath):
     console.log(f"Number of error plots: {len(listOfRelevantKeys):>6d}")
     for keyName in track(listOfRelevantKeys, description="Draw error plots"):
-        drawErrorPlot(theFile, keyName, xAxisName, outputPath)
+        try:
+            drawErrorPlot(theFile, keyName, xAxisName, outputPath)
+        except:
+            console.log(f':warning-emoji: {keyName} failed')
 
 def main(args):
     ROOT.gStyle.SetOptStat(0)

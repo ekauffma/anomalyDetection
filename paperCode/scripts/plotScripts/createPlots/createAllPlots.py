@@ -29,12 +29,6 @@ class plotTask():
         self.status = plotProcess.returncode
         if plotProcess.returncode != 0:
             self.errorMessage = plotProcess.stdout +'\n\n' + plotProcess.stderr
-            # print("Failed with error:")
-            # print(self.errorMessage)
-            # print("Code:")
-            # print(self.status)
-            # print("Output")
-            # print(plotProcess.stdout)
         resultQueue.put(
             [
                 self.name,

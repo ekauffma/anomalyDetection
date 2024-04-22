@@ -31,12 +31,12 @@ def drawL1RangeROC(cicadaROC, referenceROC, sampleName, backgroundName, cicadaSc
     cicadaROC.SetLineWidth(2)
     referenceROC.SetLineWidth(2)
 
-    maxRate = 100.0
+    maxRate = 40.0e3
     dummyHistogram = ROOT.TH1D(
         f"dummy_{canvasName}",
         f"dummy_{canvasName}",
         100,
-        0.0,
+        0.1,
         maxRate,
     )
     dummyHistogram.Draw()
@@ -46,9 +46,15 @@ def drawL1RangeROC(cicadaROC, referenceROC, sampleName, backgroundName, cicadaSc
 
     dummyHistogram.GetXaxis().SetTitle("Overall Rate on Background Events (kHz)")
     dummyHistogram.GetYaxis().SetTitle("Signal Efficiency")
-    dummyHistogram.GetYaxis().SetRangeUser(1e-3, 1.0)
-    dummyHistogram.GetXaxis().SetRangeUser(1e-1, 100.0)
+    dummyHistogram.GetYaxis().SetRangeUser(1e-2, 1.0)
+    dummyHistogram.GetXaxis().SetRangeUser(1e-1, maxRate)
     dummyHistogram.SetTitle("")
+    
+    theLegend = ROOT.TLegend(0.7, 0.1, 0.9, 0.3)
+    theLegend.AddEntry(cicadaROC, f"{cicadaScoreName}", "l")
+    theLegend.AddEntry(referenceROC, f"{referenceName}", "l")
+    theLegend.SetFillStyle(0)
+    theLegend.SetLineWidth(0)
 
     quietROOTFunc(theCanvas.SaveAs)(
         str(outputPath/f"{canvasName}.png")
@@ -102,7 +108,7 @@ def makeROCFromConfig(cicadaScoreName, sampleName, backgroundName, referenceName
     cicadaROC = convertROCFromEffToRate(cicadaROC)
     referenceROC = convertROCFromEffToRate(referenceROC)
 
-    drawUnNormalizedROC(cicadaROC, referenceROC, sampleName, backgroundName, cicadaScoreName, referenceName, outputPath)
+    #drawUnNormalizedROC(cicadaROC, referenceROC, sampleName, backgroundName, cicadaScoreName, referenceName, outputPath)
     drawL1RangeROC(cicadaROC, referenceROC, sampleName, backgroundName, cicadaScoreName, referenceName, outputPath)
 
 def makeAllScoreNamesFromGroups(listOfGroups):
@@ -118,8 +124,8 @@ def main(args):
     console.log("Individual ROC curves")
     
     basePath = pathlib.Path('/nfs_scratch/aloeliger/PaperPlotFiles/PlotFiles/')
-    #inputFileName = basePath/"scorePlotsForROCs.root"
-    inputFileName = basePath/"scorePlots.root"
+    inputFileName = basePath/"scorePlotsForROCs.root"
+    #inputFileName = basePath/"scorePlots.root"
     
     theFile = ROOT.TFile(
         str(inputFileName)
@@ -132,7 +138,7 @@ def main(args):
     listOfKeys = list(theFile.GetListOfKeys())
     listOfKeys = [x.GetName() for x in listOfKeys]
 
-    samplePattern = re.compile('.*(?=_(anomalyScore|CICADA|HT))')
+    samplePattern = re.compile('.*(?=_(GADGET|CICADA|HT))')
     def sample_matched_substring(s):
         match = samplePattern.search(s)
         return match.group(0) if match else None
@@ -161,8 +167,12 @@ def main(args):
         CICADA_vXp2p0N_Group,
         CICADA_vXp2p1_Group,
         CICADA_vXp2p1N_Group,
+        CICADA_vXp2p2_Group,
+        CICADA_vXp2p2N_Group,
+        GADGET_v1p0p0_Group,
     ]
     cicadaScoreNames = makeAllScoreNamesFromGroups(cicadaScoreGroups)
+    cicadaScoreNames.append('CICADA_v2p1p2')
     referenceNames =[
         toyHTModel.scoreName,
         CICADAInputScore.scoreName,
@@ -180,7 +190,8 @@ def main(args):
         )
     )
     console.print(f"# of individual configurations: {len(rocConfigurations):>6d}")
-    for config in track(rocConfigurations, description="Drawing ROCs..."):
+    for config in rocConfigurations:
+        console.log(f"{config[0]}, {config[1]}, {config[2]}, {config[3]}")
         makeROCFromConfig(*config, theFile, outputPath)
     
 if __name__ == '__main__':
