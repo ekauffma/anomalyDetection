@@ -32,7 +32,6 @@ class createScorePlotTask(createPlotTask):
             CICADA_vXp2p1N_Group,
             CICADA_vXp2p2_Group,
             CICADA_vXp2p2N_Group,
-            GADGET_v1p0p0_Group,
         ]
 
         scoreNames = self.makeAllScoreNamesFromGroups(cicadaScoreGroups)
@@ -91,7 +90,6 @@ class createScorePlotTask(createPlotTask):
     #this may be expensive enough that we want to think about a way to cache this on disk
     #this can be at the very least restructured to bookings before calling values.
     def getScoreMaxesAndMins(self, scores, sampleDataframes):
-        #self.console.log("Calculating score max and min")
         sampleMaxes = {}
         sampleMins = {}
         # book all the calculations up front
@@ -116,7 +114,7 @@ class createScorePlotTask(createPlotTask):
             possibleMins = []
             for sample in sampleDataframes:
                 possibleMaxes.append(sampleMaxes[sample][score])
-                possibleMins.append(sampleMaxes[sample][score])
+                possibleMins.append(sampleMins[sample][score])
             scoreMaxes[score] = max(possibleMaxes)
             scoreMins[score] = min(possibleMins)
         return scoreMaxes, scoreMins

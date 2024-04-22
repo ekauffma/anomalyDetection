@@ -255,6 +255,7 @@ class createTeacherStudentPlotTask(createPlotTask):
     def calculateMaxesAndMins(self, dataframes, teacherStudentGroups):
         overallMaxes= {}
         overallMins={}
+
         possibleMaxes = {}
         possibleMins = {}
         for teacherStudentGroup in teacherStudentGroups:
@@ -332,7 +333,6 @@ class createTeacherStudentPlotTask(createPlotTask):
             CICADA_vXp2p1N_Group,
             CICADA_vXp2p2_Group,
             CICADA_vXp2p2N_Group,
-            GADGET_v1p0p0_Group,
         ]
 
         dictOfDataframes = {}
