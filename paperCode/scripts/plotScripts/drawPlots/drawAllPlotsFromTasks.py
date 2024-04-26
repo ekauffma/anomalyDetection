@@ -64,9 +64,9 @@ def main(args):
 
     allTasks = [
         theDrawScorePlotsTask,
-        #theTeacherStudentPlotsTask,
-        #theHTCorrelationPlotTask,
-        #theSignalAdditionsPlotTask,
+        theTeacherStudentPlotsTask,
+        theHTCorrelationPlotTask,
+        theSignalAdditionsPlotTask,
     ]
 
     drawPlots(allTasks)

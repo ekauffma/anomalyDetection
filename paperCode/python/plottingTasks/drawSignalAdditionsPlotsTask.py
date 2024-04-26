@@ -89,9 +89,16 @@ class drawSignalAdditionsPlotsTask(drawPlotTask):
         #And total percent addition on the y axis
         for score in noOverlapPlots:
             canvasName = f"{score}_additions_plot"
-            theCanvas = ROOT.TCanvas(canvasName)
+            theCanvas = ROOT.TCanvas(
+                canvasName,
+                canvasName,
+                1200,
+                500,
+            )
+            theCanvas.SetRightMargin(0.33)
 
-            theLegend = ROOT.TLegend(0.6, 0.6, 0.9, 0.9)
+            #theLegend = ROOT.TLegend(0.6, 0.6, 0.9, 0.9)
+            theLegend = ROOT.TLegend(0.667, 0.1, 1.0, 0.9)
             theLegend.SetLineWidth(0)
             theLegend.SetFillStyle(0)
             
@@ -105,7 +112,7 @@ class drawSignalAdditionsPlotsTask(drawPlotTask):
                 
                 additionsGraph = self.makeAdditionsPlot(noOverlapHist, overlapHist, allHist)
 
-                plotColor = possibleColors[index % len(possibleColors)] + 2*(index//len(possibleColors))
+                plotColor = possibleColors[index % len(possibleColors)] + 5*(index//len(possibleColors))
                 #Set the various graph specific settings
                 additionsGraph.SetMarkerStyle(20)
                 additionsGraph.SetLineWidth(2)
@@ -150,7 +157,8 @@ class drawSignalAdditionsPlotsTask(drawPlotTask):
             cmsLatex.SetTextSize(0.05)
             cmsLatex.SetNDC(True)
             cmsLatex.SetTextAlign(32)
-            cmsLatex.DrawLatex(0.9,0.92, "#font[61]{CMS} #font[52]{Preliminary}")
+            #cmsLatex.DrawLatex(0.9,0.92, "#font[61]{CMS} #font[52]{Preliminary}")
+            cmsLatex.DrawLatex(0.667,0.92, "#font[61]{CMS} #font[52]{Preliminary}")
             
             theLegend.Draw()
 

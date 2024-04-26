@@ -5,13 +5,14 @@ from anomalyDetection.paperCode.plottingUtilities.models import *
 from pathlib import Path
 from anomalyDetection.paperCode.plottingUtilities.scoreMaxAndMins import scoreMaxAndMinHelper
 
-class createHTCorrelationPlotTask(createPlotTask):
+class createCICADATurnOnPlotTask(createPlotTask):
     def __init__(
             self,
             taskName: str,
             outputFileName: str,
             dictOfSamples: dict,
-            outputPath: Path = Path("/nfs_scratch/aloeliger/PaperPlotFiles/PlotFiles/")
+            outputPath: Path = Path("/nfs_scratch/aloeliger/PaperPlotFiles/PlotFiles/"),
+            nBins: int = 40
     ):
         super().__init__(
             taskName,
@@ -19,9 +20,10 @@ class createHTCorrelationPlotTask(createPlotTask):
             dictOfSamples,
             outputPath,
         )
+        self.nBins = nBins
         self.scoreMaxAndMins = scoreMaxAndMinHelper()
 
-    def createPlots(self):        
+    def createPlots(self):
         cicadaScoreGroups = [
             CICADA_vXp2p0_Group,
             CICADA_vXp2p0N_Group,
@@ -31,47 +33,56 @@ class createHTCorrelationPlotTask(createPlotTask):
             CICADA_vXp2p2N_Group,
         ]
         
+        secondaryVariables = [
+            "HT",
+        ]
+
         scoreNames = self.makeAllScoreNamesFromGroups(cicadaScoreGroups)
         scoreNames.append("CICADA_v2p1p2")
-        
+
         dictOfDataframes = {}
         for sampleName in self.dictOfSamples:
             dictOfDataframes[sampleName] = self.dictOfSamples[sampleName].getNewDataframe()
             dictOfDataframes[sampleName] = toyHTModel.applyFrameDefinitions(dictOfDataframes[sampleName])
 
         scoreMaxes, scoreMins = self.scoreMaxAndMins.getScoreMaxesAndMins(scoreNames, dictOfDataframes)
-        HTMax, HTMin = self.getHTMaxAndMin(dictOfDataframes)
-
+        secondaryMaxes, secondaryMins =self.getScoreMaxesAndMins(secondaryVariables, dictOfDataframes)
+        # okay, how do we do trigger turn ons?
+        #A typical trigger turn on is a variable, and %trigger fires out of total
+        # Let's start with HT
+        #I think the plot on this is just a 2D score plot frankly
+        #And then we row integrate in the drawing script
         for sampleName in dictOfDataframes:
-            #listOfFiles = self.dictOfSamples["sampleName"].listOfFiles
-            #self.console.log(f'{sampleName}: {len(listOfFiles):>6d} Files')
-            
-            theDataframe = dictOfDataframes[sampleName]
-            self.plotsToBeWritten += self.makeHTPlotsForDataframe(
-                theDataframe,
-                scoreNames,
-                sampleName,
-                scoreMaxes,
-                scoreMins,
-                HTMax,
-                HTMin,
-                40
+            for variable in secondaryVariables:
+                plots = self.makeScoresVsVariablePlot(
+                    dataframe = dictOfDataframes[sampleName],
+                    sample = sampleName,
+                    scores = scoreNames,
+                    secondaryVariable = variable,
+                    scoreMaxes = scoreMaxes,
+                    scoreMins = scoreMins,
+                    secondaryVariableMax = secondaryMaxes[variable],
+                    secondaryVariableMin = secondaryMins[variable],
+                )
+                self.plotsToBeWritten += plots
+
+    def makeScoresVsVariablePlot(self, dataframe, sample, scores, secondaryVariable, scoreMaxes, scoreMins, secondaryVariableMax, secondaryVariableMin):
+        resultPlots = []
+        for score in scores:
+            histName = f"{sample}_xxx_{score}_xxx_{secondaryVariable}"
+            theModel = ROOT.RDF.TH2DModel(
+                histName,
+                histName,
+                self.nBins,
+                scoreMins[score],
+                scoreMaxes[score],
+                self.nBins,
+                secondaryVariableMin,
+                secondaryVariableMax,
             )
-
-    def getHTMaxAndMin(self, sampleDataframes):
-        #self.console.log("Calculating HT max and min")
-        possibleMaxes = []
-        possibleMins = []
-        for sample in sampleDataframes:
-            possibleMaxes.append(sampleDataframes[sample].Max("HT"))
-            possibleMins.append(sampleDataframes[sample].Min("HT"))
-        for index in range(len(possibleMaxes)):
-            possibleMaxes[index] = possibleMaxes[index].GetValue()
-        for index in range(len(possibleMins)):
-            possibleMins[index] = possibleMins[index].GetValue()
-        return max(possibleMaxes), min(possibleMins)
-        
-
+            resultPlots.append(dataframe.Histo2D(theModel, score, secondaryVariable))
+        return resultPlots
+    
     def getScoreMaxesAndMins(self, scores, sampleDataframes):
         #self.console.log("Calculating score max and min")
         sampleMaxes = {}
@@ -102,29 +113,6 @@ class createHTCorrelationPlotTask(createPlotTask):
             scoreMaxes[score] = max(possibleMaxes)
             scoreMins[score] = min(possibleMins)
         return scoreMaxes, scoreMins
-
-    def makeHTPlotsForDataframe(self, theDataframe, listOfScores, sampleName, scoreMaxes, scoreMins, HTMax, HTMin, nBins=100):
-        resultPlots = []
-        for scoreName in listOfScores:
-            # The use of xx is a delimter inbetween important parts of the name
-            histoName = f'{sampleName}_xxx_{scoreName}_xxx_HT'
-            histoModel = ROOT.RDF.TH2DModel(
-                histoName,
-                histoName,
-                nBins,
-                scoreMins[scoreName],
-                scoreMaxes[scoreName],
-                nBins,
-                HTMin,
-                HTMax
-            )
-            thePlot = theDataframe.Histo2D(
-                histoModel,
-                scoreName,
-                "HT",
-            )
-            resultPlots.append(thePlot)
-        return resultPlots
 
     def makeAllScoreNamesFromGroups(self, listOfGroups):
         scoreNameList = []

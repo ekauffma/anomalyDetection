@@ -4,9 +4,7 @@ import argparse
 from rich.console import Console
 from rich.table import Table
 import multiprocessing
-from time import perf_counter
-
-import os
+from time import perf_counter, sleep
 
 from anomalyDetection.paperCode.plottingCore.plotTask import createPlotTask
 
@@ -14,6 +12,8 @@ from anomalyDetection.paperCode.plottingTasks.createScorePlotTask import createS
 from anomalyDetection.paperCode.plottingTasks.createTeacherStudentPlotTask import createTeacherStudentPlotTask
 from anomalyDetection.paperCode.plottingTasks.createHTCorrelationPlotTask import createHTCorrelationPlotTask
 from anomalyDetection.paperCode.plottingTasks.createSignalAdditionsPlotTask import createSignalAdditionsPlotTask
+from anomalyDetection.paperCode.plottingTasks.createCICADATurnOnPlotTask import createCICADATurnOnPlotTask
+from anomalyDetection.paperCode.plottingTasks.createCICADAPurityContentPlotTask import createCICADAPurityContentPlotTask
 
 from anomalyDetection.paperCode.samples.paperSampleBuilder import reducedSamples as samples
 
@@ -96,23 +96,36 @@ def main(args):
         dictOfSamples = samples,
         nBins=40,
     )
-    
+    CICADATurnOnTask = createCICADATurnOnPlotTask(
+        taskName = "Create CICADA Turn On Curves",
+        outputFileName="CICADATurnOnCurves.root",
+        dictOfSamples = samples,
+        nBins = 30,
+    )
+    CICADAPurityContentPlotTask = createCICADAPurityContentPlotTask(
+        taskName = 'Create Purity Content Plots',
+        outputFileName = 'CICADAPurityContent.root',
+        dictOfSamples = samples,
+    )
+
     allTasks = [
         scoreTask,
         rocScoreTask,
         HTCorrelationTask,
         teacherStudentTask,
         signalAdditionsTask,
+        CICADATurnOnTask,
+        CICADAPurityContentPlotTask,
     ]
 
     start_time = perf_counter()
     with console.status("Creating plots. This may take some time"):
-        p = multiprocessing.Pool(5)
+        p = multiprocessing.Pool(10)
         p.map(runTask, allTasks)
     end_time = perf_counter()
     console.log(f"Finished all plots in {end_time-start_time: 8.4g} seconds")
 
-    os.sleep(5)
+    sleep(5)
 
     statusTable = Table(title="Plot status")
     statusTable.add_column("Task Name")

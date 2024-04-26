@@ -3,6 +3,11 @@ from anomalyDetection.paperCode.plottingCore.plotTask import createPlotTask
 import ROOT
 from anomalyDetection.paperCode.plottingUtilities.models import *
 from pathlib import Path
+from anomalyDetection.paperCode.plottingUtilities.scoreMaxAndMins import scoreMaxAndMinHelper
+
+import os
+
+import json
 
 class createTeacherStudentPlotTask(createPlotTask):
     def __init__(
@@ -10,7 +15,8 @@ class createTeacherStudentPlotTask(createPlotTask):
             taskName: str,
             outputFileName: str,
             dictOfSamples: dict,
-            outputPath: Path = Path("/nfs_scratch/aloeliger/PaperPlotFiles/PlotFiles/")
+            outputPath: Path = Path("/nfs_scratch/aloeliger/PaperPlotFiles/PlotFiles/"),
+            maxMinCachePath: Path = Path(f"{os.environ['CMSSW_BASE']}/src/anomalyDetection/paperCode/metadata/teacherStudentMaxMinCalculation.json")
     ):
         super().__init__(
             taskName,
@@ -18,39 +24,18 @@ class createTeacherStudentPlotTask(createPlotTask):
             dictOfSamples,
             outputPath,
         )
+        self.scoreMaxAndMins = scoreMaxAndMinHelper()
+        self.maxMinCachePath = maxMinCachePath
+        self.maxes, self.mins = self.loadMaxesAndMins()
 
-    #this may be expensive enough that we want to think about a way to cache this on disk
-    def getScoreMaxesAndMins(self, scores, sampleDataframes):
-        #self.console.log("Calculating score max and min")
-        sampleMaxes = {}
-        sampleMins = {}
-        # book all the calculations up front
-        for sample in sampleDataframes:
-            sampleDataframe = sampleDataframes[sample]
-            sampleMaxes[sample] = {}
-            sampleMins[sample] = {}
-            for score in scores:
-                sampleMaxes[sample][score] = sampleDataframe.Max(score)
-                sampleMins[sample][score] = sampleDataframe.Min(score)
-        #trigger the actual calculation after all are booked
-        for sample in sampleDataframes:
-            for score in scores:
-                sampleMaxes[sample][score] = sampleMaxes[sample][score].GetValue()
-                sampleMins[sample][score] = sampleMins[sample][score].GetValue()
-
-        #now let's get the overall maxes
-        scoreMaxes = {}
-        scoreMins = {}
-        for score in scores:
-            possibleMaxes = []
-            possibleMins = []
-            for sample in sampleDataframes:
-                possibleMaxes.append(sampleMaxes[sample][score])
-                possibleMins.append(sampleMaxes[sample][score])
-            scoreMaxes[score] = max(possibleMaxes)
-            scoreMins[score] = min(possibleMins)
-        return scoreMaxes, scoreMins
-
+    def loadMaxesAndMins(self):
+        try:
+            theFile = open(self.maxMinCachePath)
+            data = json.load(theFile)
+        except FileNotFoundError:
+            return {}, {}
+        else:
+            return data['maxes'], data['mins']
 
     def createDeltaScatter(self, frame, sampleName, theTeacherStudentPair, adjustedTeacherScoreMax, adjustedTeacherScoreMin, deltaMax, deltaMin):
         # the xxx is a delimeter between important parts of the name
@@ -252,6 +237,24 @@ class createTeacherStudentPlotTask(createPlotTask):
                 )
         return plots
 
+    def getMaxesAndMins(self, dataframes, teacherStudentGroups):
+        #this is lazy, but I don't want to deal with the logic of rewriting what
+        #needs to be calculated or not.
+        #just cache the result, and move on
+        #But this will likely mean that we have to remember to clear that cache
+        #If and when the list of scores we care about updates
+        if self.maxes == {} or self.mins == {}: 
+            self.maxes, self.mins = self.calculateMaxesAndMins(dataframes, teacherStudentGroups)
+            with open(self.maxMinCachePath) as theFile:
+                json.dump(
+                    {
+                        'maxes': self.maxes,
+                        'mins': self.mins,
+                    },
+                    theFile
+                )
+        return self.maxes, self.mins
+
     def calculateMaxesAndMins(self, dataframes, teacherStudentGroups):
         overallMaxes= {}
         overallMins={}
@@ -341,7 +344,7 @@ class createTeacherStudentPlotTask(createPlotTask):
             for teacherStudentGroup in teacherStudentModels:
                 dictOfDataframes[sampleName] = teacherStudentGroup.applyFrameDefinitions(dictOfDataframes[sampleName])
         
-        maxes, mins = self.calculateMaxesAndMins(dictOfDataframes, teacherStudentModels)
+        maxes, mins = self.getMaxesAndMins(dictOfDataframes, teacherStudentModels)
 
         for sampleName in dictOfDataframes:
             #console.log(f"{sampleName}")

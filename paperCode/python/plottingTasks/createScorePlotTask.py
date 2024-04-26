@@ -3,6 +3,7 @@ from anomalyDetection.paperCode.plottingCore.plotTask import createPlotTask
 import ROOT
 from anomalyDetection.paperCode.plottingUtilities.models import *
 from pathlib import Path
+from anomalyDetection.paperCode.plottingUtilities.scoreMaxAndMins import scoreMaxAndMinHelper
 
 class createScorePlotTask(createPlotTask):
     def __init__(
@@ -20,6 +21,7 @@ class createScorePlotTask(createPlotTask):
             outputPath,
         )
         self.nBins = nBins
+        self.scoreMaxAndMins = scoreMaxAndMinHelper()
         
     def createPlots(self):
         sampleNames = list(self.dictOfSamples.keys())
@@ -57,7 +59,7 @@ class createScorePlotTask(createPlotTask):
                 allDFs[sampleName] = group.applyFrameDefinitions(allDFs[sampleName])
         
         #let's get the minimum and maximum values for each of our scores
-        scoreMaxes, scoreMins = self.getScoreMaxesAndMins(scoreNames, allDFs)
+        scoreMaxes, scoreMins = self.scoreMaxAndMins.getScoreMaxesAndMins(scoreNames, allDFs)
 
         for sampleName in allDFs:
             theDataframe = allDFs[sampleName]
@@ -67,8 +69,8 @@ class createScorePlotTask(createPlotTask):
                 scoreNames,
                 sampleName,
                 nBins = self.nBins,
+                scoreMins = scoreMins,
                 scoreMaxes = scoreMaxes,
-                scoreMins = scoreMins
             )
             self.plotsToBeWritten += thePlots
 
@@ -81,8 +83,8 @@ class createScorePlotTask(createPlotTask):
                 histName,
                 histName,
                 nBins,
-                scoreMaxes[scoreName],
                 scoreMins[scoreName],
+                scoreMaxes[scoreName],
             )
             resultPlots.append(theDataframe.Histo1D(theModel, scoreName))
         return resultPlots
@@ -133,7 +135,7 @@ class createScorePlotTask(createPlotTask):
     def makeAllScoreNamesFromGroups(self, listOfGroups):
         scoreNameList = []
         for group in listOfGroups:
-            scoreNameList.append(group.teacherModel.scoreName)
+            scoreNameList.append(group.adjustedTeacherScoreName)
             for studentModelName in group.studentModels:
                 scoreNameList.append(group.studentModels[studentModelName].scoreName)
         return scoreNameList

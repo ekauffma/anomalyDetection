@@ -3,6 +3,7 @@ from anomalyDetection.paperCode.plottingCore.plotTask import createPlotTask
 import ROOT
 from anomalyDetection.paperCode.plottingUtilities.models import *
 from pathlib import Path
+from anomalyDetection.paperCode.plottingUtilities.scoreMaxAndMins import scoreMaxAndMinHelper
 
 class createSignalAdditionsPlotTask(createPlotTask):
     def __init__(
@@ -20,6 +21,7 @@ class createSignalAdditionsPlotTask(createPlotTask):
             outputPath,
         )
         self.nBins = nBins
+        self.scoreMaxAndMins = scoreMaxAndMinHelper()
 
     def getListOfTriggers(self, sampleDataframe):
         listOfColumns = sampleDataframe.GetColumnNames()
@@ -129,7 +131,7 @@ class createSignalAdditionsPlotTask(createPlotTask):
         #and the additions from the no overlaps plot
 
         #This means that we need to know the max and min of each score
-        scoreMaxes, scoreMins = self.getScoreMaxesAndMins(scoreNames, allDFs)
+        scoreMaxes, scoreMins = self.scoreMaxAndMins.getScoreMaxesAndMins(scoreNames, allDFs)
         
         for sample in allDFs:
             for score in scoreNames:
@@ -199,7 +201,7 @@ class createSignalAdditionsPlotTask(createPlotTask):
     def makeAllScoreNamesFromGroups(self, listOfGroups):
         scoreNameList = []
         for group in listOfGroups:
-            scoreNameList.append(group.teacherModel.scoreName)
+            scoreNameList.append(group.adjustedTeacherScoreName)
             for studentModelName in group.studentModels:
                 scoreNameList.append(group.studentModels[studentModelName].scoreName)
         return scoreNameList

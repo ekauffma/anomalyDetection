@@ -35,6 +35,48 @@ class drawTeacherStudentPlotTask(drawPlotTask):
         else:
             raise ValueError(f"drawTeacherStudentPlotTask got a name it didn't know how to parse: {histogramName}")
         return sample, teacher, student, plotType
+        
+    def rowNormalizeHistogram(self, histogram):
+        histogramName = f"{histogram.GetName()}_row_norm"
+        rowNormHisto = histogram.Clone()
+        rowNormHisto.SetNameTitle(
+            histogramName,
+            histogramName,
+        )
+        
+        nbins_x = rowNormHisto.GetNbinsX()
+        nbins_y = rowNormHisto.GetNbinsY()
+        
+        for yBin in range(1, nbins_y+1):
+            totalContent = 0.0
+            for xBin in range(1, nbins_x+1):
+                totalContent += rowNormHisto.GetBinContent(xBin, yBin)
+            if totalContent != 0.0:
+                for xBin in range(1, nbins_x+1):
+                    content = rowNormHisto.GetBinContent(xBin, yBin)
+                    rowNormHisto.SetBinContent(xBin, yBin, content/totalContent)
+        return rowNormHisto
+
+    def columnNormalizeHistogram(self, histogram):
+        histogramName = f"{histogram.GetName()}_column_norm"
+        columnNormHisto = histogram.Clone()
+        columnNormHisto.SetNameTitle(
+            histogramName,
+            histogramName,
+        )
+        
+        nbins_x = columnNormHisto.GetNbinsX()
+        nbins_y = columnNormHisto.GetNbinsY()
+        
+        for xBin in range(1, nbins_x+1):
+            totalContent = 0.0
+            for yBin in range(1, nbins_y+1):
+                totalContent += columnNormHisto.GetBinContent(xBin, yBin)
+            if totalContent != 0.0:
+                for yBin in range(1, nbins_y+1):
+                    content = columnNormHisto.GetBinContent(xBin, yBin)
+                    columnNormHisto.SetBinContent(xBin, yBin, content/totalContent)
+        return columnNormHisto
 
     def drawPlots(self):
         ROOT.gStyle.SetOptStat(0)
@@ -103,20 +145,45 @@ class drawTeacherStudentPlotTask(drawPlotTask):
         self.processErrors(studentErrs, name="student_errs")
         self.processErrors(studentAbsErrs, name="student_abs_errors")
 
+    def draw2D(self, theHisto, yAxisName, xAxisName, canvasName):
+        theCanvas = ROOT.TCanvas(canvasName)
+        outputName = self.outputPath/f"{canvasName}.png"
+        
+        theHisto.Draw("COLZ TEXT")
+        theHisto.GetXaxis().SetTitle(xAxisName)
+        theHisto.GetYaxis().SetTitle(yAxisName)
+        
+        quietROOTFunc(theCanvas.SaveAs)(str(outputName))                    
+
     def processDeltaScatters(self, deltaScatters, name):
         for sample in deltaScatters:
             for teacher in deltaScatters[sample]:
                 for student in deltaScatters[sample][teacher]:
-                    canvasName = f"{sample}_xxx_{teacher}_xxx_{student}_xxx_{name}"
-                    theCanvas = ROOT.TCanvas(canvasName)
                     theHisto = deltaScatters[sample][teacher][student]
-                    outputName = self.outputPath/f"{canvasName}.png"
                     
-                    theHisto.Draw("COLZ TEXT")
-                    theHisto.GetXaxis().SetTitle("Adjusted Teacher Score")
-                    theHisto.GetYaxis().SetTitle(student)
+                    self.draw2D(
+                        theHisto,
+                        yAxisName = f"{student} Error",
+                        xAxisName = "Adjusted Teacher Score",
+                        canvasName = f"{sample}_xxx_{teacher}_xxx_{student}_xxx_{name}"
+                    )
 
-                    quietROOTFunc(theCanvas.SaveAs)(str(outputName))                    
+                    rowNormHisto = self.rowNormalizeHistogram(theHisto)
+                    self.draw2D(
+                        rowNormHisto,
+                        yAxisName = f"{student} Error",
+                        xAxisName = "Adjusted Teacher Score",
+                        canvasName = f"{sample}_xxx_{teacher}_xxx_{student}_xxx_{name}_row_normalized",
+                    )
+
+                    columnNormHisto = self.columnNormalizeHistogram(theHisto)
+                    self.draw2D(
+                        columnNormHisto,
+                        yAxisName = f"{student} Error",
+                        xAxisName = "Adjusted Teacher Score",
+                        canvasName = f"{sample}_xxx_{teacher}_xxx_{student}_xxx_{name}_column_normalized",
+                    )
+                    
                     
     def processScores(self, scores, name):
         for sample in scores:
