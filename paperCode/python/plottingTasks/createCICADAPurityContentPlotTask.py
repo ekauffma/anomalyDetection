@@ -4,6 +4,7 @@ import ROOT
 from anomalyDetection.paperCode.plottingUtilities.models import *
 from pathlib import Path
 from anomalyDetection.paperCode.plottingUtilities.scoreMaxAndMins import scoreMaxAndMinHelper
+from anomalyDetection.paperCode.plottingUtilities.rateTables import rateTableHelper
 
 class createCICADAPurityContentPlotTask(createPlotTask):
     def __init__(
@@ -13,6 +14,7 @@ class createCICADAPurityContentPlotTask(createPlotTask):
             dictOfSamples: dict,
             outputPath: Path = Path("/nfs_scratch/aloeliger/PaperPlotFiles/PlotFiles/"),
             nBins: int = 40,
+            rates: list[float] = [3.0,],
     ):
         super().__init__(
             taskName,
@@ -21,7 +23,9 @@ class createCICADAPurityContentPlotTask(createPlotTask):
             outputPath,
         )
         self.scoreMaxAndMins = scoreMaxAndMinHelper()
+        self.rateTable = rateTableHelper()
         self.nBins = nBins
+        self.rates = rates
         
         self.multiEGTriggerList = [
             'L1_DoubleEG8er2p5_HTT300er',
@@ -236,6 +240,59 @@ class createCICADAPurityContentPlotTask(createPlotTask):
             'L1_SingleTau130er2p1',
         ]
 
+    def calculateTriggerOverlaps(self, rateDF, triggerGroups):
+        overlapCount = {}
+        for group in triggerGroups:
+            overlapCount[group] = rateDF.Filter(
+                self.getOverlapString(triggerGroups[group])
+            ).Count()
+        return overlapCount
+    
+    def makeOverlapHist(self, overlapCounts, totalCount, score, rate):
+        rateStr = str(rate).replace('.', 'p')
+        overlapName = f'OverlapCounts_xxx_{score}_xxx_{rateStr}'
+        totalName = f'TotalContents_xxx_{score}_xxx_{rateStr}'
+        contentsName = f'OverlapContents_xxx_{score}_xxx_{rateStr}'
+
+        triggerGroups = list(overlapCounts.keys())
+        nBins = len(triggerGroups)
+        
+        overlapHist = ROOT.TH1D(
+            overlapName,
+            overlapName,
+            nBins,
+            0.0,
+            nBins,
+        )
+        totalHist = ROOT.TH1D(
+            totalName,
+            totalName,
+            nBins,
+            0.0,
+            nBins
+        )
+
+        for index, triggerGroup in enumerate(triggerGroups):
+            overlapHist.Fill(
+                index,
+                overlapCounts[triggerGroup]
+            )
+            totalHist.Fill(
+                index,
+                totalCount
+            )
+            overlapHist.SetBinLabel(index, triggerGroup)
+            totalHist.SetBinLabel(index, triggerGroup)
+        overlapContentsHist = overlapHist.Clone()
+        overlapContentsHist.SetNameTitle(contentsName, contentsName)
+        overlapContentsHist.Divide(totalHist)
+        for index, triggerGruop in enumerate(triggerGroups):
+            overlapContentsHist.SetBinLabel(index, triggerGroup)
+        overlapContentsHist.Scale(100.0)
+
+        return overlapHist, totalHist, overlapContentsHist
+        
+
     def getListOfTriggers(self, sampleDataframe):
         listOfColumns = sampleDataframe.GetColumnNames()
         listOfTriggers = [str(x) for x in listOfColumns if ('L1_' in str(x) and '_prescale' not in str(x))]
@@ -375,4 +432,16 @@ class createCICADAPurityContentPlotTask(createPlotTask):
                             triggerGroupName,
                         )
                     )
+        for score in scoreNames:
+            for desiredRate in self.rates:
+                rateThreshold, trueRate = self.rateTable.getThresholdForRate(score, desiredRate)
+                rateDF = allDFs['ZeroBias'].Filter(f'{score} > {rateThreshold}')
+                overlaps = self.calculateTriggerOverlaps(rateDF, triggerGroups)
+                totalCount = rateDF.Count()
+                
+                for triggerGroup in overlaps:
+                    overlaps[triggerGroup] = overlaps[triggerGroup].GetValue()
+                totalCount = totalCount.GetValue()
 
+                overlapHist, totalHist, overlapContents = self.makeOverlapHist(overlaps, totalCount, score, desiredRate)
+                self.plotsToBeWritten += [overlapHist, totalHist, overlapContents]

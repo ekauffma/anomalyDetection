@@ -4,6 +4,8 @@ import ROOT
 from anomalyDetection.paperCode.plottingUtilities.models import *
 from pathlib import Path
 from anomalyDetection.paperCode.plottingUtilities.scoreMaxAndMins import scoreMaxAndMinHelper
+from anomalyDetection.paperCode.plottingUtilities.rateTables import rateTableHelper
+
 
 class createCICADATurnOnPlotTask(createPlotTask):
     def __init__(
@@ -12,7 +14,8 @@ class createCICADATurnOnPlotTask(createPlotTask):
             outputFileName: str,
             dictOfSamples: dict,
             outputPath: Path = Path("/nfs_scratch/aloeliger/PaperPlotFiles/PlotFiles/"),
-            nBins: int = 40
+            nBins: int = 40,
+            rates: list[float] = [3.0,],
     ):
         super().__init__(
             taskName,
@@ -22,6 +25,8 @@ class createCICADATurnOnPlotTask(createPlotTask):
         )
         self.nBins = nBins
         self.scoreMaxAndMins = scoreMaxAndMinHelper()
+        self.rateTable = rateTableHelper()
+        self.rates = rates
 
     def createPlots(self):
         cicadaScoreGroups = [
@@ -44,9 +49,12 @@ class createCICADATurnOnPlotTask(createPlotTask):
         for sampleName in self.dictOfSamples:
             dictOfDataframes[sampleName] = self.dictOfSamples[sampleName].getNewDataframe()
             dictOfDataframes[sampleName] = toyHTModel.applyFrameDefinitions(dictOfDataframes[sampleName])
+            for scoreGroup in cicadaScoreGroups:
+                dictOfDataframes[sampleName] = scoreGroup.applyFrameDefinitions(dictOfDataframes[sampleName])
 
         scoreMaxes, scoreMins = self.scoreMaxAndMins.getScoreMaxesAndMins(scoreNames, dictOfDataframes)
         secondaryMaxes, secondaryMins =self.getScoreMaxesAndMins(secondaryVariables, dictOfDataframes)
+
         # okay, how do we do trigger turn ons?
         #A typical trigger turn on is a variable, and %trigger fires out of total
         # Let's start with HT
@@ -65,6 +73,45 @@ class createCICADATurnOnPlotTask(createPlotTask):
                     secondaryVariableMin = secondaryMins[variable],
                 )
                 self.plotsToBeWritten += plots
+
+        #okay. We need to redo the trigger turn ons to work in 1D
+        #How do we do that?
+        #We get the dataframe corresponding to our desired rate
+        #And we get a dataframe that is total
+        #We make two plots of the secondary variable
+        #Then later we divide
+
+        #yikes
+        for rate in self.rates:
+            for sampleName in dictOfDataframes:
+                for variable in secondaryVariables:
+                    for score in scoreNames:
+                        rateThreshold, trueRate = self.rateTable.getThresholdForRate(score, rate)
+                        rateDF = dictOfDataframes[sampleName].Filter(f'{score} > {rateThreshold}')
+                        rateHist, totalHist = self.make1DScoresVsVariablePlot(self, dictOfDataframes[sampleName], rateDF, sampleName, score, variable, secondaryMaxes[variable], secondaryMins[variable], rate)
+                        self.plotsToBeWritten += [rateHist, totalHist]
+
+    def make1DScoresVsVariablePlot(self, totalDF, rateDF, sample, score, secondaryVariable, variableMax, variableMin, rate):
+        rateStr = str(rate).replace('.','p')
+        rateName = f"{sample}_xxx_{score}_xxx_{secondaryVariable}_xxx_1D_xxx_{rateStr}"
+        totalName = f"{sample}_xxx_{score}_xxx_{secondaryVariable}_xxx_1D_xxx_total"
+        rateModel = ROOT.RDF.TH1DModel(
+            rateName,
+            rateName,
+            self.nBins,
+            variableMin,
+            variableMax,
+        )
+        totalModel = ROOT.RDF.TH1DModel(
+            totalName,
+            totalName,
+            self.nBins,
+            variableMin,
+            variableMax,
+        )
+        rateHist = rateDF.Histo1D(rateModel, secondaryVariable)
+        totalHist = totalDF.Histo1D(totalModel, secondaryVariable)
+        return rateHist, totalHist
 
     def makeScoresVsVariablePlot(self, dataframe, sample, scores, secondaryVariable, scoreMaxes, scoreMins, secondaryVariableMax, secondaryVariableMin):
         resultPlots = []
