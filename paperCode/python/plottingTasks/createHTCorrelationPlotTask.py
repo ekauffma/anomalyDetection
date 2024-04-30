@@ -38,6 +38,8 @@ class createHTCorrelationPlotTask(createPlotTask):
         for sampleName in self.dictOfSamples:
             dictOfDataframes[sampleName] = self.dictOfSamples[sampleName].getNewDataframe()
             dictOfDataframes[sampleName] = toyHTModel.applyFrameDefinitions(dictOfDataframes[sampleName])
+            for scoreGroup in cicadaScoreGroups:
+                dictOfDataframes[sampleName] = scoreGroup.applyFrameDefinitions(dictOfDataframes[sampleName])
 
         scoreMaxes, scoreMins = self.scoreMaxAndMins.getScoreMaxesAndMins(scoreNames, dictOfDataframes)
         HTMax, HTMin = self.getHTMaxAndMin(dictOfDataframes)
