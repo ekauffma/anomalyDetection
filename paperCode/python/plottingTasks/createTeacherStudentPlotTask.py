@@ -245,7 +245,7 @@ class createTeacherStudentPlotTask(createPlotTask):
         #If and when the list of scores we care about updates
         if self.maxes == {} or self.mins == {}: 
             self.maxes, self.mins = self.calculateMaxesAndMins(dataframes, teacherStudentGroups)
-            with open(self.maxMinCachePath) as theFile:
+            with open(self.maxMinCachePath, 'w+') as theFile:
                 json.dump(
                     {
                         'maxes': self.maxes,
