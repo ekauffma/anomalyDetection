@@ -88,7 +88,7 @@ class createCICADATurnOnPlotTask(createPlotTask):
                     for score in scoreNames:
                         rateThreshold, trueRate = self.rateTable.getThresholdForRate(score, rate)
                         rateDF = dictOfDataframes[sampleName].Filter(f'{score} > {rateThreshold}')
-                        rateHist, totalHist = self.make1DScoresVsVariablePlot(self, dictOfDataframes[sampleName], rateDF, sampleName, score, variable, secondaryMaxes[variable], secondaryMins[variable], rate)
+                        rateHist, totalHist = self.make1DScoresVsVariablePlot(dictOfDataframes[sampleName], rateDF, sampleName, score, variable, secondaryMaxes[variable], secondaryMins[variable], rate)
                         self.plotsToBeWritten += [rateHist, totalHist]
 
     def make1DScoresVsVariablePlot(self, totalDF, rateDF, sample, score, secondaryVariable, variableMax, variableMin, rate):

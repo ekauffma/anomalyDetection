@@ -281,13 +281,13 @@ class createCICADAPurityContentPlotTask(createPlotTask):
                 index,
                 totalCount
             )
-            overlapHist.SetBinLabel(index, triggerGroup)
-            totalHist.SetBinLabel(index, triggerGroup)
+            overlapHist.GetXaxis().SetBinLabel(index+1, triggerGroup)
+            totalHist.GetXaxis().SetBinLabel(index+1, triggerGroup)
         overlapContentsHist = overlapHist.Clone()
         overlapContentsHist.SetNameTitle(contentsName, contentsName)
         overlapContentsHist.Divide(totalHist)
-        for index, triggerGruop in enumerate(triggerGroups):
-            overlapContentsHist.SetBinLabel(index, triggerGroup)
+        for index, triggerGroup in enumerate(triggerGroups):
+            overlapContentsHist.GetXaxis().SetBinLabel(index+1, triggerGroup)
         overlapContentsHist.Scale(100.0)
 
         return overlapHist, totalHist, overlapContentsHist
@@ -349,6 +349,17 @@ class createCICADAPurityContentPlotTask(createPlotTask):
         )
         return dataframe.Filter(self.getOverlapString(triggerGroup)).Histo1D(theModel, score)
 
+    def totalBooking(self, dataframe, sampleName, score, scoreMin, scoreMax, triggergroup, triggerGroupName):
+        histoName = f'{sampleName}_xxx_{score}_xxx_Total_xxx_{triggerGroupName}'
+        theModel = ROOT.RDF.TH1DModel(
+            histoName,
+            histoName,
+            self.nBins,
+            scoreMin,
+            scoreMax,
+        )
+        return dataframe.Histo1D(theModel, score)
+
     def makeAllScoreNamesFromGroups(self, listOfGroups):
         scoreNameList = []
         for group in listOfGroups:
@@ -374,6 +385,7 @@ class createCICADAPurityContentPlotTask(createPlotTask):
         ]
 
         scoreNames = self.makeAllScoreNamesFromGroups(cicadaScoreGroups)
+        scoreNames.append("CICADA_v2p1p2")
 
         allDFs = {}
         for sampleName in self.dictOfSamples:

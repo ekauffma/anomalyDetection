@@ -83,7 +83,7 @@ def drawAllErrorPlots(theFile, listOfRelevantKeys, xAxisName, outputPath):
 
 def main(args):
     ROOT.gStyle.SetOptStat(0)
-    ROOT.gStyle.SetPaintTextFormat("1.1g")
+    ROOT.gStyle.SetPaintTextFormat("3.2g")
 
     basePath = pathlib.Path('/nfs_scratch/aloeliger/PaperPlotFiles/PlotFiles/')
     theFile = ROOT.TFile(

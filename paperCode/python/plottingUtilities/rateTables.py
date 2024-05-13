@@ -3,16 +3,22 @@ from pathlib import Path
 import os
 import json
 import math
+from anomalyDetection.paperCode.plottingUtilities.scoreMaxAndMins import scoreMaxAndMinHelper
+from anomalyDetection.anomalyTriggerSkunkworks.plotSettings.utilities import convertEffToRate, convertRateToEff
 
-class rateTableHelper():
+class rateTableHelperBase():
     def __init__(
             self,
-            jsonLocation: Path = Path(f'{os.environ["CMSSW_BASE"]}/src/anomalyDetection/paperCode/metadata/rateTables.json')
+            jsonLocation: Path,
     ):
         self.jsonLocation = jsonLocation
-        with open(self.jsonLocation) as theFile:
+        try:
+            theFile = open(self.jsonLocation)
+        except:
+            self.rateTable = None
+        else:
             self.rateTable = json.load(theFile)
-    
+
     #binary search for the closest threshold to a desired rate
     def getThresholdForRate(self, score, rate):
         scoreTable = self.rateTable[score]
@@ -63,3 +69,54 @@ class rateTableHelper():
             elif (searchVal < threshold):
                 lowerBound = searchIndex
         return scoreTable[scoreTableKeys[searchIndex]], float(scoreTableKeys[searchIndex])
+
+class rateTableHelper(rateTableHelperBase):
+    def __init__(
+            self,
+            jsonLocation: Path = Path(f'{os.environ["CMSSW_BASE"]}/src/anomalyDetection/paperCode/metadata/rateTables.json')
+    ):
+        super().__init__(jsonLocation)
+        self.maxMinHelper = scoreMaxAndMinHelper()
+    
+    def makeScoreCounts(self, dataframe, score):
+        scoreMax = self.maxMinHelper.maxes[score]
+        scoreMin = self.maxMinHelper.mins[score]
+        scoreDelta = scoreMax - scoreMin
+        scoreStep = math.pow(10, math.floor(math.log10(scoreDelta // 100)))
+        nSteps = math.ceil(scoreDelta/scoreStep)
+        
+        result = {}
+        for i in range(nSteps):
+            scoreThreshold = scoreMin+i*scoreStep
+            result[scoreThreshold] = dataframe.Filter(f"{score} >= {scoreThreshold}").Count()
+        return result
+
+    def triggerCalculations(self, scoreCounts):
+        for score in scoreCounts:
+            for threshold in scoreCounts[score]:
+                scoreCounts[score][threshold] = scoreCounts[score][threshold].GetValue()
+        return scoreCounts
+
+    def makeRateTable(self, scoreDict, totalCount):
+        rateDict = {}
+        for score in scoreDict:
+            rateDict[score] = {}
+            for threshold in scoreDict[score]:
+                eff = scoreDict[score][threshold] / totalCount
+                rate = convertEffToRate(eff)
+                rateDict[score][threshold] = rate
+        return rateDict
+
+    def calculateRateTables(self, dataframe, scores):
+        totalCount = dataframe.Count()
+        scoreCounts = {}
+        for score in scores:
+            scoreCounts[score] = self.makeScoreCounts(dataframe, score)
+
+        totalCount = totalCount.GetValue()
+        scoreCounts = self.triggerCalculations(scoreCounts)
+        
+        rateTable = self.makeRateTable(scoreCounts, totalCount)
+        self.rateTable = rateTable
+        with open (self.jsonLocation, 'w+') as theFile:
+            json.dump(self.rateTable, theFile, indent=4)

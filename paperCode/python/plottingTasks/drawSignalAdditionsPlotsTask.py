@@ -5,6 +5,7 @@ from anomalyDetection.paperCode.plottingCore.plotTask import drawPlotTask
 import ROOT
 from anomalyDetection.anomalyTriggerSkunkworks.utilities.decorators import quietROOTFunc
 import math
+import re
 
 class drawSignalAdditionsPlotsTask(drawPlotTask):
     def __init__(
@@ -38,6 +39,9 @@ class drawSignalAdditionsPlotsTask(drawPlotTask):
             additionsGraph.SetPoint(i-1, scoreThreshold, percentageAdded)
             additionsGraph.SetPointError(i-1, 0.0, percentError)
         return additionsGraph
+
+    def removeTuneFromSignalString(self, signalString):
+        return re.sub('_TuneCP5.*', '', signalString)
 
     def drawPlots(self):
         ROOT.gStyle.SetOptStat(0)
@@ -101,6 +105,7 @@ class drawSignalAdditionsPlotsTask(drawPlotTask):
             theLegend = ROOT.TLegend(0.667, 0.1, 1.0, 0.9)
             theLegend.SetLineWidth(0)
             theLegend.SetFillStyle(0)
+            theLegend.SetTextSize(0.03)
             
             additionsGraphs = []
             primaryGraph = None
@@ -132,7 +137,7 @@ class drawSignalAdditionsPlotsTask(drawPlotTask):
                 
                 theLegend.AddEntry(
                     additionsGraph,
-                    sample,
+                    self.removeTuneFromSignalString(sample),
                     'p'
                 )
                 additionsGraphs.append(additionsGraph)

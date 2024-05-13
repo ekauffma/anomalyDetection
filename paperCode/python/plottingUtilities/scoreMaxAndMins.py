@@ -2,42 +2,35 @@ from anomalyDetection.paperCode.plottingUtilities.models import *
 from pathlib import Path
 import json
 import os
+import math
 
 class scoreMaxAndMinHelper():
     def __init__(
             self,
-            jsonLocation: Path = Path(f'{os.environ["CMSSW_BASE"]}/src/anomalyDetection/paperCode/metadata/scoreMaxesAndMins.json')
+            jsonLocation: Path = Path(f'{os.environ["CMSSW_BASE"]}/src/anomalyDetection/paperCode/metadata/scoreMaxesAndMins.json'),
+            defaults = (-50.0, 256.0),
     ):
         self.jsonLocation = jsonLocation
         self.maxes, self.mins = self.loadMaxesAndMins()
+        self.defaults = defaults
+
+    def weedOutBadNumbers(self, maxes, mins):
+        for score in maxes:
+            if math.isnan(maxes[score]) or math.isinf(maxes[score]):
+                maxes[score] = self.defaults[1]
+            if math.isnan(mins[score]) or math.isinf(mins[score]):
+                mins[score] = self.defaults[0]
 
     def loadMaxesAndMins(self):
         try:
             theFile = open(self.jsonLocation)
             data = json.load(theFile)
         except FileNotFoundError:
-            return {}, {}
+            return None, None
         else:
             return data['maxes'], data['mins']
 
-    def getScoreMaxesAndMins(self, scores, sampleDataframes):
-        scoresToBeCalculated = []
-        for score in scores:
-            if (score not in self.maxes) or (score not in self.mins):
-                scoresToBeCalculated.append(score)
-        if scoresToBeCalculated != []:
-            newMaxes, newMins = self.calculateScoreMaxesAndMins(scoresToBeCalculated, sampleDataframes)
-            #update the class and the file
-            self.maxes.update(newMaxes)
-            self.mins.update(newMins)
-            with open(self.jsonLocation, 'w+') as theFile:
-                json.dump(
-                    {
-                        'maxes': self.maxes,
-                        'mins': self.mins,
-                    },
-                    theFile
-                )
+    def getScoreMaxesAndMins(self):
         return self.maxes, self.mins
 
     def calculateScoreMaxesAndMins(self, scores, sampleDataframes):
@@ -71,4 +64,16 @@ class scoreMaxAndMinHelper():
             scoreMaxes[score] = maxScore
             scoreMins[score] = minScore
 
-        return scoreMaxes, scoreMins
+        self.weedOutBadNumbers(scoreMaxes, scoreMins)
+
+        self.maxes = scoreMaxes
+        self.mins = scoreMins
+        with open(self.jsonLocation, 'w+') as theFile:
+            json.dump(
+                {
+                    'maxes': self.maxes,
+                    'mins': self.mins,
+                },
+                theFile,
+                indent=4,
+            )

@@ -8,6 +8,10 @@ from anomalyDetection.paperCode.plottingTasks.drawCICADAandHTCorrelationTask imp
 from anomalyDetection.paperCode.plottingTasks.drawScorePlotsTask import drawScorePlotsTask
 from anomalyDetection.paperCode.plottingTasks.drawTeacherStudentPlotTask import drawTeacherStudentPlotTask
 from anomalyDetection.paperCode.plottingTasks.drawSignalAdditionsPlotsTask import drawSignalAdditionsPlotsTask
+from anomalyDetection.paperCode.plottingTasks.drawCICADAPurityContentsPlotsTask import drawCICADAPurityContentsPlotsTask
+from anomalyDetection.paperCode.plottingTasks.drawCICADATurnOnCurveTask import drawCICADATurnOnCurveTask
+from anomalyDetection.paperCode.plottingTasks.drawObjectCorrelationPlotsTask import drawObjectCorrelationPlotsTask
+
 
 console = Console()
 
@@ -61,12 +65,33 @@ def main(args):
             'signaladditions': '/nfs_scratch/aloeliger/PaperPlotFiles/PlotFiles/signalAdditionsPlots.root',
         },
     )
+    thePurityContentsTask = drawCICADAPurityContentsPlotsTask(
+        taskName = 'Draw Purity Contents Plots',
+        dictOfFiles = {
+            'purity': '/nfs_scratch/aloeliger/PaperPlotFiles/PlotFiles/CICADAPurityContent.root'
+        }
+    )
+    theTurnOnCurveTask = drawCICADATurnOnCurveTask(
+        taskName = 'Draw CICADA Turn On Curves Plots',
+        dictOfFiles = {
+            'turnon': '/nfs_scratch/aloeliger/PaperPlotFiles/PlotFiles/CICADATurnOnCurves.root'
+        }
+    )
+    theDrawObjectCorrelationTask = drawObjectCorrelationPlotsTask(
+        taskName = 'Draw Object Correlation Plots',
+        dictOfFiles = {
+            'objects': '/nfs_scratch/aloeliger/PaperPlotFiles/PlotFiles/CICADAObjectPlots.root'
+        }
+    )
 
     allTasks = [
         theDrawScorePlotsTask,
         theTeacherStudentPlotsTask,
         theHTCorrelationPlotTask,
         theSignalAdditionsPlotTask,
+        thePurityContentsTask,
+        theTurnOnCurveTask,
+        theDrawObjectCorrelationTask,
     ]
 
     drawPlots(allTasks)

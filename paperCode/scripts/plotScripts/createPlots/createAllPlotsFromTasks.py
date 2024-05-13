@@ -14,6 +14,7 @@ from anomalyDetection.paperCode.plottingTasks.createHTCorrelationPlotTask import
 from anomalyDetection.paperCode.plottingTasks.createSignalAdditionsPlotTask import createSignalAdditionsPlotTask
 from anomalyDetection.paperCode.plottingTasks.createCICADATurnOnPlotTask import createCICADATurnOnPlotTask
 from anomalyDetection.paperCode.plottingTasks.createCICADAPurityContentPlotTask import createCICADAPurityContentPlotTask
+from anomalyDetection.paperCode.plottingTasks.createObjectCorrelationPlotsTask import createObjectCorrelationPlotsTask
 
 from anomalyDetection.paperCode.samples.paperSampleBuilder import reducedSamples as samples
 
@@ -38,7 +39,7 @@ resultQueue = multiprocessing.Queue()
 def runTask(theTask: createPlotTask):
     start_time = perf_counter()
     localConsole = Console()
-    localConsole.log(f"Task: {theTask.taskName} started")
+    #localConsole.log(f"Task: {theTask.taskName} started")
     try:
         theTask.executeTask()
     except Exception as err:
@@ -63,7 +64,7 @@ def runTask(theTask: createPlotTask):
                 end_time-start_time,
             )
         )
-    localConsole.log(f"Task: {theTask.taskName} finished")
+    #localConsole.log(f"Task: {theTask.taskName} finished")
 
 def main(args):
     scoreTask = createScorePlotTask(
@@ -107,6 +108,11 @@ def main(args):
         outputFileName = 'CICADAPurityContent.root',
         dictOfSamples = samples,
     )
+    objectCorrelationPlotsTask = createObjectCorrelationPlotsTask(
+        taskName = 'Create Object Correlation Plots',
+        outputFileName = 'CICADAObjectPlots.root',
+        dictOfSamples = samples,
+    )
 
     allTasks = [
         scoreTask,
@@ -116,6 +122,7 @@ def main(args):
         signalAdditionsTask,
         CICADATurnOnTask,
         CICADAPurityContentPlotTask,
+        objectCorrelationPlotsTask,
     ]
 
     start_time = perf_counter()
