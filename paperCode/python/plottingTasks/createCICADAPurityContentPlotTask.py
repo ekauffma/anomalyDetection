@@ -446,7 +446,13 @@ class createCICADAPurityContentPlotTask(createPlotTask):
                     )
                     self.plotsToBeWritten.append(
                         self.totalBooking(
-                            
+                            allDFs[sample],
+                            sample,
+                            score,
+                            scoreMins[score],
+                            scoreMaxes[score],
+                            triggerGroups[triggerGroupName],
+                            triggerGroupName
                         )
                     )
         for score in scoreNames:

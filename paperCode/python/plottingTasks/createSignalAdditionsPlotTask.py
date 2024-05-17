@@ -131,7 +131,7 @@ class createSignalAdditionsPlotTask(createPlotTask):
         #and the additions from the no overlaps plot
 
         #This means that we need to know the max and min of each score
-        scoreMaxes, scoreMins = self.scoreMaxAndMins.getScoreMaxesAndMins(scoreNames, allDFs)
+        scoreMaxes, scoreMins = self.scoreMaxAndMins.getScoreMaxesAndMins()
         
         for sample in allDFs:
             for score in scoreNames:
