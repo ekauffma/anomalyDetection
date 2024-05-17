@@ -394,7 +394,7 @@ class createCICADAPurityContentPlotTask(createPlotTask):
                 allDFs[sampleName] = group.applyFrameDefinitions(allDFs[sampleName])
 
         #Get score maxes and mins
-        scoreMaxes, scoreMins = self.scoreMaxAndMins.getScoreMaxesAndMins(scoreNames, allDFs)
+        scoreMaxes, scoreMins = self.scoreMaxAndMins.getScoreMaxesAndMins()
 
         #figure out what the unprescaled triggers are
         unprescaledTriggers = self.getListOfUnprescaledTriggers(allDFs['ZeroBias'])
@@ -442,6 +442,11 @@ class createCICADAPurityContentPlotTask(createPlotTask):
                             scoreMaxes[score],
                             triggerGroups[triggerGroupName],
                             triggerGroupName,
+                        )
+                    )
+                    self.plotsToBeWritten.append(
+                        self.totalBooking(
+                            
                         )
                     )
         for score in scoreNames:

@@ -18,7 +18,9 @@
         "CICADA_vXp2p2N_teacher_score_adjusted": 150.82089233398438,
         "CICADA_v1p2p2N_score": 255.99609375,
         "CICADA_v2p2p2N_score": 255.99609375,
-        "CICADA_v2p1p2": 255.99609375
+        "CICADA_v2p1p2": 255.99609375,
+        "HT": 2047.5,
+        "CICADAInputSum": 6062.0
     },
     "mins": {
         "CICADA_vXp2p0_teacher_score_adjusted": -69.3134994506836,
@@ -39,6 +41,8 @@
         "CICADA_vXp2p2N_teacher_score_adjusted": -29.830951690673828,
         "CICADA_v1p2p2N_score": 0.0,
         "CICADA_v2p2p2N_score": 0.0,
-        "CICADA_v2p1p2": 0.0
+        "CICADA_v2p1p2": 0.0,
+        "HT": 9.999999974752427e-07,
+        "CICADAInputSum": 4.0
     }
 }

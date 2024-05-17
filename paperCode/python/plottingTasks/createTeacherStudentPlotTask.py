@@ -80,6 +80,45 @@ class createTeacherStudentPlotTask(createPlotTask):
         )
         return scatterBooking
 
+    def createFractionalErrorScatter(self, frame, sampleName, theTeacherStudentPair, adjustedTeacherScoreMax, adjustedTeacherScoreMin, fractionalErrorMax, fractionalErrorMin):
+        histoName = f"{sampleName}_xxx_{theTeacherStudentPair.studentFractionalErrorName}_xxx_{theTeacherStudentPair.studentModel.modelName}_xxx_fractional_delta_scatter"
+        scatterModel = ROOT.RDF.TH2DModel(
+            histoName,
+            histoName,
+            20,
+            adjustedTeacherScoreMin,
+            adjustedTeacherScoreMax,
+            20,
+            fractionalErrorMin,
+            fractionalErrorMax,
+        )
+
+        theBooking = frame.Histo2D(
+            scatterModel,
+            theTeacherStudentPair.adjustedTeacherScoreName,
+            theTeacherStudentPair.studentFractionalErrorName,
+        )
+        return theBooking
+
+    def createAbsFractionalErrorScatter(self, frame, sampleName, theTeacherStudentPair, adjustedTeacherScoreMax, adjustedTeacherScoreMin, absFractionalErrorMax, absFractionalErrorMin):
+        histoName = f"{sampleName}_xxx_{theTeacherStudentPair.studentFractionalErrorName}_xxx_{theTeacherStudentPair.studentModel.modelName}_xxx_abs_fractional_delta_scatter"
+        scatterModel = ROOT.RDF.TH2DModel(
+            histoName,
+            histoName,
+            20,
+            adjustedTeacherScoreMin,
+            adjustedTeacherScoreMax,
+            20,
+            absFractionalErrorMin,
+            absFractionalErrorMax,
+        )
+
+        theBooking = frame.Histo2D(
+            scatterModel,
+            theTeacherStudentPair.adjustedTeacherScoreName,
+            theTeacherStudentPair.absStudentFractionalErrorName
+        )
+
     def createTeacherAdjustedScorePlot(self, frame, sampleName, theTeacherStudentCollection, adjustedTeacherScoreMax, adjustedTeacherScoreMin):
         # the xxx is a delimeter between important parts of the name
         histoName = f"{sampleName}_xxx_{theTeacherStudentCollection.teacherModel.modelName}_xxx_teacher_adjusted_score"
@@ -235,6 +274,29 @@ class createTeacherStudentPlotTask(createPlotTask):
                         mins[theTeacherStudentPair.absStudentScoreDeltaName],
                     )
                 )
+                
+                plots.append(
+                    self.createFractionalErrorScatter(
+                        dataframe,
+                        sampleName,
+                        theTeacherStudentPair,
+                        maxes[theTeacherStudentPair.adjustedTeacherScoreName],
+                        mins[theTeacherStudentPair.adjustedTeacherScoreName],
+                        maxes[theTeacherStudentPair.studentFractionalErrorName],
+                        mins[theTeacherStudentPair.studentFractionalErrorName],
+                    )
+                )
+                plots.append(
+                    self.createAbsFractionalErrorScatter(
+                        dataframe,
+                        sampleName,
+                        theTeacherStudentPair,
+                        maxes[theTeacherStudentPair.adjustedTeacherScoreName],
+                        mins[theTeacherStudentPair.adjustedTeacherScoreName],
+                        maxes[theTeacherStudentPair.absStudentFractionalErrorName],
+                        mins[theTeacherStudentPair.absStudentFractionalErrorName],
+                    )
+                )
         return plots
 
     def getMaxesAndMins(self, dataframes, teacherStudentGroups):
@@ -289,6 +351,11 @@ class createTeacherStudentPlotTask(createPlotTask):
                     possibleMins[teacherStudentPair.absStudentScoreDeltaName][sampleName] = theDataframe.Min(teacherStudentPair.absStudentScoreDeltaName)
                     possibleMaxes[teacherStudentPair.studentModel.scoreName][sampleName] = theDataframe.Max(teacherStudentPair.studentModel.scoreName)
                     possibleMins[teacherStudentPair.studentModel.scoreName][sampleName] = theDataframe.Min(teacherStudentPair.studentModel.scoreName)
+                    
+                    possibleMaxes[teacherStudentPair.studentFractionalErrorName][sampleName] = theDataframe.Max(teacherStudentPair.studentFractionalErrorName)
+                    possibleMins[teacherStudentPair.studentFractionalErrorName][sampleName] = theDataframe.Min(teacherStudentPair.studentFractionalErrorName)
+                    possibleMaxes[teacherStudentPair.absStudentFractionalErrorName][sampleName] = theDataframe.Max(teacherStudentPair.absStudentFractionalErrorName)
+                    possibleMins[teacherStudentPair.absStudentFractionalErrorName][sampleName] = theDataframe.Min(teacherStudentPair.absStudentFractionalErrorName)
         #After the nightmare of booking all those result vectors, we calculate the
         # actual values we need to use
         for teacherStudentGroup in teacherStudentGroups:
@@ -307,6 +374,11 @@ class createTeacherStudentPlotTask(createPlotTask):
                     possibleMaxes[teacherStudentPair.studentModel.scoreName][sampleName] = possibleMaxes[teacherStudentPair.studentModel.scoreName][sampleName].GetValue()
                     possibleMins[teacherStudentPair.studentModel.scoreName][sampleName] = possibleMins[teacherStudentPair.studentModel.scoreName][sampleName].GetValue()
 
+                    possibleMaxes[teacherStudentPair.studentFractionalErrorName][sampleName] = possibleMaxes[teacherStudentPair.studentFractionalErrorName][sampleName].GetValue()
+                    possibleMins[teacherStudentPair.studentFractionalErrorName][sampleName] = possibleMins[teacherStudentPair.studentFractionalErrorName][sampleName].GetValue()
+                    possibleMaxes[teacherStudentPair.absStudentFractionalErrorName][sampleName] = possibleMaxes[teacherStudentPair.absStudentFractionalErrorName][sampleName].GetValue()
+                    possibleMins[teacherStudentPair.absStudentFractionalErrorName][sampleName] = possibleMins[teacherStudentPair.absStudentFractionalErrorName][sampleName].GetValue()
+
         #okay. Now we need to get the genuine maxes
         for teacherStudentGroup in teacherStudentGroups:
             overallMaxes[teacherStudentGroup.adjustedTeacherScoreName], overallMins[teacherStudentGroup.adjustedTeacherScoreName] = self.getMaxAndMinFromPossibles(possibleMaxes, possibleMins, teacherStudentGroup.adjustedTeacherScoreName)
@@ -315,6 +387,9 @@ class createTeacherStudentPlotTask(createPlotTask):
                 overallMaxes[teacherStudentPair.studentScoreDeltaName], overallMins[teacherStudentPair.studentScoreDeltaName] = self.getMaxAndMinFromPossibles(possibleMaxes, possibleMins, teacherStudentPair.studentScoreDeltaName)
                 overallMaxes[teacherStudentPair.absStudentScoreDeltaName], overallMins[teacherStudentPair.absStudentScoreDeltaName] = self.getMaxAndMinFromPossibles(possibleMaxes, possibleMins, teacherStudentPair.absStudentScoreDeltaName)
                 overallMaxes[teacherStudentPair.studentModel.scoreName], overallMins[teacherStudentPair.studentModel.scoreName] = self.getMaxAndMinFromPossibles(possibleMaxes, possibleMins, teacherStudentPair.studentModel.scoreName)
+
+                overallMaxes[teacherStudentPair.studentFractionalErrorName], overallMins[teacherStudentPair.studentFractionalErrorName] = self.getMaxAndMinFromPossibles(possibleMaxes, possibleMins, teacherStudentPair.studentFractionalErrorName)
+                overallMaxes[teacherStudentPair.absStudentFractionalErrorName], overallMins[teacherStudentPair.absStudentFractionalErrorName] = self.getMaxAndMinFromPossibles(possibleMaxes, possibleMins, teacherStudentPair.absStudentFractionalErrorName)
 
         return overallMaxes, overallMins
 

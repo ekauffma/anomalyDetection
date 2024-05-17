@@ -41,7 +41,7 @@ class createHTCorrelationPlotTask(createPlotTask):
             for scoreGroup in cicadaScoreGroups:
                 dictOfDataframes[sampleName] = scoreGroup.applyFrameDefinitions(dictOfDataframes[sampleName])
 
-        scoreMaxes, scoreMins = self.scoreMaxAndMins.getScoreMaxesAndMins(scoreNames, dictOfDataframes)
+        scoreMaxes, scoreMins = self.scoreMaxAndMins.getScoreMaxesAndMins()
         HTMax, HTMin = self.getHTMaxAndMin(dictOfDataframes)
 
         for sampleName in dictOfDataframes:

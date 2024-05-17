@@ -81,8 +81,8 @@ class rateTableHelper(rateTableHelperBase):
     def makeScoreCounts(self, dataframe, score):
         scoreMax = self.maxMinHelper.maxes[score]
         scoreMin = self.maxMinHelper.mins[score]
-        scoreDelta = scoreMax - scoreMin
-        scoreStep = math.pow(10, math.floor(math.log10(scoreDelta // 100)))
+        scoreDelta = abs(scoreMax - scoreMin)
+        scoreStep = math.pow(10, math.floor(math.log10(scoreDelta / 100)))
         nSteps = math.ceil(scoreDelta/scoreStep)
         
         result = {}

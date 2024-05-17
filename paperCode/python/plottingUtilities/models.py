@@ -4,6 +4,12 @@ class modelScore():
     def __init__(self, scoreName: str, modelName: str):
         self.scoreName = scoreName
         self.modelName = modelName
+        
+    def returnAllScoreNames(self):
+        return [self.scoreName,]
+
+    def applyFrameDefinitions(self, frame):
+        return frame
 
 class computedModelScore(modelScore):
     def __init__(self, scoreName: str, modelName: str, scoreDefinition: str):
@@ -31,6 +37,12 @@ class teacherStudentPair():
     @property
     def adjustedTeacherScoreName(self):
         return f"{self.teacherModel.scoreName}_adjusted"
+    @property
+    def studentFractionalErrorName(self):
+        return f"{self.studentScoreDeltaName}_fractional"
+    @property
+    def absStudentFractionalErrorName(self):
+        return f"{self.studentFractionalErrorName}_abs"
 
     @property
     def studentScoreDeltaDefinition(self):
@@ -38,6 +50,12 @@ class teacherStudentPair():
     @property
     def absStudentScoreDeltaDefinition(self):
         return f"abs({self.studentScoreDeltaName})"
+    @property
+    def studentFractionalErrorDefinition(self):
+        return f"({self.studentModel.scoreName} - {self.adjustedTeacherScoreName})/{self.adjustedTeacherScoreName}"
+    @property
+    def absStudentFractionalErrorDefinition(self):
+        return f"abs({self.studentFractionalErrorDefinition})"
 
     def applyFrameDefinitions(self, frame):
         frame = frame.Define(
@@ -47,6 +65,14 @@ class teacherStudentPair():
         frame = frame.Define(
             self.absStudentScoreDeltaName,
             self.absStudentScoreDeltaDefinition,
+        )
+        frame = frame.Define(
+            self.studentFractionalErrorName,
+            self.studentFractionalErrorDefinition,
+        )
+        frame = frame.Define(
+            self.absStudentFractionalErrorName,
+            self.absStudentFractionalErrorDefinition,
         )
         return frame
 
@@ -88,6 +114,12 @@ class teacherStudentGroup():
         for theTeacherStudentPair in self.teacherStudentPairs:
             frame = theTeacherStudentPair.applyFrameDefinitions(frame)
         return frame
+
+    def returnAllScoreNames(self):
+        theList = [self.adjustedTeacherScoreName]
+        #theList = [self.teacherModel.scoreName]
+        theList += [self.studentModels[name].scoreName for name in self.studentModels]
+        return theList
 
 class GADGETTeacherStudentGroup(teacherStudentGroup):
     @property
@@ -197,3 +229,23 @@ recomputedHT = computedModelScore(
     }
     """
 )
+
+CICADA_v2p1p2 = modelScore('CICADA_v2p1p2', 'CICADA_v2p1p2')
+
+def getAllScoreNames(scoreGroups):
+    theList = []
+    for x in scoreGroups:
+        theList += x.returnAllScoreNames()
+    return theList
+
+standardScoreGroups = [
+    CICADA_vXp2p0_Group,
+    CICADA_vXp2p0N_Group,
+    CICADA_vXp2p1_Group,
+    CICADA_vXp2p1N_Group,
+    CICADA_vXp2p2_Group,
+    CICADA_vXp2p2N_Group,
+    CICADA_v2p1p2,
+    toyHTModel,
+    CICADAInputScore,
+]

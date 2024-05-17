@@ -24,6 +24,7 @@ class createScorePlotTask(createPlotTask):
         self.scoreMaxAndMins = scoreMaxAndMinHelper()
         
     def createPlots(self):
+        print("Starting")
         sampleNames = list(self.dictOfSamples.keys())
         sampleNames.remove('ZeroBias')
             
@@ -59,9 +60,12 @@ class createScorePlotTask(createPlotTask):
                 allDFs[sampleName] = group.applyFrameDefinitions(allDFs[sampleName])
         
         #let's get the minimum and maximum values for each of our scores
-        scoreMaxes, scoreMins = self.scoreMaxAndMins.getScoreMaxesAndMins(scoreNames, allDFs)
+        print("Maxes")
+        scoreMaxes, scoreMins = self.scoreMaxAndMins.getScoreMaxesAndMins()
 
+        print("Making plots")
         for sampleName in allDFs:
+            print(sampleName)
             theDataframe = allDFs[sampleName]
             #self.console.log(f'{sampleName}')
             thePlots = self.makePlotsForScores(
@@ -73,10 +77,12 @@ class createScorePlotTask(createPlotTask):
                 scoreMaxes = scoreMaxes,
             )
             self.plotsToBeWritten += thePlots
+        print("Done!")
 
     def makePlotsForScores(self, theDataframe, listOfScores, baseName, nBins, scoreMaxes, scoreMins):
         resultPlots = []
         for scoreName in listOfScores:
+            print(scoreName)
             # The use of xx is a delimter inbetween important parts of the name
             histName = f'{baseName}_xxx_{scoreName}'
             theModel = ROOT.RDF.TH1DModel(

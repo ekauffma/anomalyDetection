@@ -6,6 +6,7 @@ import ROOT
 from anomalyDetection.anomalyTriggerSkunkworks.utilities.decorators import quietROOTFunc
 import math
 import re
+from anomalyDetection.paperCode.plottingUtilities.rateTables import rateTableHelper
 
 class drawSignalAdditionsPlotsTask(drawPlotTask):
     def __init__(
@@ -15,17 +16,17 @@ class drawSignalAdditionsPlotsTask(drawPlotTask):
             outputPath: Path = Path("/nfs_scratch/aloeliger/PaperPlotFiles/FinalizedPlots/PaperSignalAdditionPlots/")
     ):
         super().__init__(taskName, dictOfFiles, outputPath)
-
+        self.rateTables = rateTableHelper()
     
     def parseHistogramName(self, histogramName):
         splitName = histogramName.split("_xxx_")
         sample, score, plotType = splitName[0], splitName[1], splitName[2]
         return sample, score, plotType
 
-    def makeAdditionsPlot(self, noOverlapHist, overlapHist, allHist):
+    def makeAdditionsPlot(self, noOverlapHist, overlapHist, allHist, scoreName):
         nHistBins = allHist.GetNbinsX()
         additionsGraph = ROOT.TGraphErrors(nHistBins)
-        
+
         for i in range(1,nHistBins+1):
             nL1OnlyEvents = overlapHist.Integral(i, nHistBins+1)
             nCICADAOnlyEvents = noOverlapHist.Integral(i, nHistBins+1)
@@ -36,7 +37,8 @@ class drawSignalAdditionsPlotsTask(drawPlotTask):
                 percentageAdded = 0.0
                 percentError = 0.0
             scoreThreshold = overlapHist.GetXaxis().GetBinLowEdge(i)
-            additionsGraph.SetPoint(i-1, scoreThreshold, percentageAdded)
+            rate, _ = self.rateTables.getRateForThreshold(scoreName, scoreThreshold)
+            additionsGraph.SetPoint(i-1, rate, percentageAdded)
             additionsGraph.SetPointError(i-1, 0.0, percentError)
         return additionsGraph
 
@@ -115,7 +117,7 @@ class drawSignalAdditionsPlotsTask(drawPlotTask):
                 overlapHist = overlapPlots[score][sample]
                 allHist = genericPlots[score][sample]
                 
-                additionsGraph = self.makeAdditionsPlot(noOverlapHist, overlapHist, allHist)
+                additionsGraph = self.makeAdditionsPlot(noOverlapHist, overlapHist, allHist, score)
 
                 plotColor = possibleColors[index % len(possibleColors)] + 5*(index//len(possibleColors))
                 #Set the various graph specific settings

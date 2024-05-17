@@ -15,6 +15,7 @@ from anomalyDetection.paperCode.plottingTasks.createSignalAdditionsPlotTask impo
 from anomalyDetection.paperCode.plottingTasks.createCICADATurnOnPlotTask import createCICADATurnOnPlotTask
 from anomalyDetection.paperCode.plottingTasks.createCICADAPurityContentPlotTask import createCICADAPurityContentPlotTask
 from anomalyDetection.paperCode.plottingTasks.createObjectCorrelationPlotsTask import createObjectCorrelationPlotsTask
+from anomalyDetection.paperCode.plottingTasks.createObjectControlPlotsTask import createObjectControlPlotsTask
 
 from anomalyDetection.paperCode.samples.paperSampleBuilder import reducedSamples as samples
 
@@ -113,6 +114,11 @@ def main(args):
         outputFileName = 'CICADAObjectPlots.root',
         dictOfSamples = samples,
     )
+    objectControlPlotsTask = createObjectControlPlotsTask(
+        taskName = 'Create Object Control Plots',
+        outputFileName = 'CICADAObjectControlPlots.root',
+        dictOfSamples = samples,
+    )
 
     allTasks = [
         scoreTask,
@@ -123,6 +129,7 @@ def main(args):
         CICADATurnOnTask,
         CICADAPurityContentPlotTask,
         objectCorrelationPlotsTask,
+        objectControlPlotsTask,
     ]
 
     start_time = perf_counter()

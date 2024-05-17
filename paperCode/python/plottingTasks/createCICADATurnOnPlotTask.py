@@ -52,7 +52,7 @@ class createCICADATurnOnPlotTask(createPlotTask):
             for scoreGroup in cicadaScoreGroups:
                 dictOfDataframes[sampleName] = scoreGroup.applyFrameDefinitions(dictOfDataframes[sampleName])
 
-        scoreMaxes, scoreMins = self.scoreMaxAndMins.getScoreMaxesAndMins(scoreNames, dictOfDataframes)
+        scoreMaxes, scoreMins = self.scoreMaxAndMins.getScoreMaxesAndMins()
         secondaryMaxes, secondaryMins =self.getScoreMaxesAndMins(secondaryVariables, dictOfDataframes)
 
         # okay, how do we do trigger turn ons?

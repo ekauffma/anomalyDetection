@@ -4,7 +4,7 @@ from anomalyDetection.paperCode.plottingUtilities.unprescaledTriggerHelper impor
 from anomalyDetection.paperCode.plottingUtilities.pureRateTables import pureRateTableHelper
 
 from anomalyDetection.paperCode.samples.paperSampleBuilder import reducedSamples as samples
-from anomalyDetection.paperCode.plottingUtilities.models import *
+from anomalyDetection.paperCode.plottingUtilities.models import standardScoreGroups, getAllScoreNames
 
 from rich.console import Console
 
@@ -19,22 +19,14 @@ def makeAllScoreNamesFromGroups(listOfGroups):
     return scoreNameList
 
 def main():
-    cicadaScoreGroups = [
-        CICADA_vXp2p0_Group,
-        CICADA_vXp2p0N_Group,
-        CICADA_vXp2p1_Group,
-        CICADA_vXp2p1N_Group,
-        CICADA_vXp2p2_Group,
-        CICADA_vXp2p2N_Group,
-    ]
+    cicadaScoreGroups = standardScoreGroups
         
     allDFs = {}
     for sampleName in samples:
         allDFs[sampleName] = samples[sampleName].getNewDataframe()
         for group in cicadaScoreGroups:
             allDFs[sampleName] = group.applyFrameDefinitions(allDFs[sampleName])
-    scoreNames = makeAllScoreNamesFromGroups(cicadaScoreGroups)
-    scoreNames.append('CICADA_v2p1p2')
+    scoreNames = getAllScoreNames(cicadaScoreGroups)
     
     console.log('Max and min calculation')
     theMinMaxHelper = scoreMaxAndMinHelper()
