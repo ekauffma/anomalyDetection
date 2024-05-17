@@ -1,6 +1,7 @@
 from anomalyDetection.paperCode.plottingCore.plotTask import createPlotTask
 
 import ROOT
+import math
 from anomalyDetection.paperCode.plottingUtilities.models import *
 from pathlib import Path
 from anomalyDetection.paperCode.plottingUtilities.scoreMaxAndMins import scoreMaxAndMinHelper
@@ -81,6 +82,7 @@ class createTeacherStudentPlotTask(createPlotTask):
         return scatterBooking
 
     def createFractionalErrorScatter(self, frame, sampleName, theTeacherStudentPair, adjustedTeacherScoreMax, adjustedTeacherScoreMin, fractionalErrorMax, fractionalErrorMin):
+        #print("Making booking")
         histoName = f"{sampleName}_xxx_{theTeacherStudentPair.studentFractionalErrorName}_xxx_{theTeacherStudentPair.studentModel.modelName}_xxx_fractional_delta_scatter"
         scatterModel = ROOT.RDF.TH2DModel(
             histoName,
@@ -98,6 +100,7 @@ class createTeacherStudentPlotTask(createPlotTask):
             theTeacherStudentPair.adjustedTeacherScoreName,
             theTeacherStudentPair.studentFractionalErrorName,
         )
+        #print("Done!")
         return theBooking
 
     def createAbsFractionalErrorScatter(self, frame, sampleName, theTeacherStudentPair, adjustedTeacherScoreMax, adjustedTeacherScoreMin, absFractionalErrorMax, absFractionalErrorMin):
@@ -118,6 +121,7 @@ class createTeacherStudentPlotTask(createPlotTask):
             theTeacherStudentPair.adjustedTeacherScoreName,
             theTeacherStudentPair.absStudentFractionalErrorName
         )
+        return theBooking
 
     def createTeacherAdjustedScorePlot(self, frame, sampleName, theTeacherStudentCollection, adjustedTeacherScoreMax, adjustedTeacherScoreMin):
         # the xxx is a delimeter between important parts of the name
@@ -206,6 +210,7 @@ class createTeacherStudentPlotTask(createPlotTask):
     def bookPlots(self, dataframe, sampleName, teacherStudentModels, maxes, mins):
         plots = []
         for teacherStudentGroup in teacherStudentModels:
+            #print("Adjusted teacher")
             plots.append(
                 self.createTeacherAdjustedScorePlot(
                     dataframe,
@@ -215,6 +220,7 @@ class createTeacherStudentPlotTask(createPlotTask):
                     mins[teacherStudentGroup.adjustedTeacherScoreName],
                 )
             )
+            #print("teacher")
             plots.append(
                 self.createTeacherScorePlot(
                     dataframe,
@@ -225,6 +231,7 @@ class createTeacherStudentPlotTask(createPlotTask):
                 )
             )
             for theTeacherStudentPair in teacherStudentGroup.teacherStudentPairs:
+                #print("Delta")
                 plots.append(
                     self.createDeltaScatter(
                         dataframe,
@@ -236,6 +243,7 @@ class createTeacherStudentPlotTask(createPlotTask):
                         mins[theTeacherStudentPair.studentScoreDeltaName],
                     )
                 )
+                #print("Abs delta")
                 plots.append(
                     self.createAbsDeltaScatter(
                         dataframe,
@@ -247,6 +255,7 @@ class createTeacherStudentPlotTask(createPlotTask):
                         mins[theTeacherStudentPair.absStudentScoreDeltaName],
                     )
                 )
+                #print("Student score")
                 plots.append(
                     self.createStudentScorePlot(
                         dataframe,
@@ -256,6 +265,7 @@ class createTeacherStudentPlotTask(createPlotTask):
                         mins[theTeacherStudentPair.studentModel.scoreName],
                     )
                 )
+                #print("Student error")
                 plots.append(
                     self.createStudentErrorHist(
                         dataframe,
@@ -265,6 +275,7 @@ class createTeacherStudentPlotTask(createPlotTask):
                         mins[theTeacherStudentPair.studentScoreDeltaName],
                     )
                 )
+                #print("student abs error")
                 plots.append(
                     self.createStudentAbsErrorHist(
                         dataframe,
@@ -274,7 +285,15 @@ class createTeacherStudentPlotTask(createPlotTask):
                         mins[theTeacherStudentPair.absStudentScoreDeltaName],
                     )
                 )
-                
+                #print("fractional error")
+                #print(theTeacherStudentPair.adjustedTeacherScoreName)
+                #print(theTeacherStudentPair.studentFractionalErrorName)
+                #print(maxes)
+                #print(mins)
+                #print(maxes[theTeacherStudentPair.adjustedTeacherScoreName])
+                #print(mins[theTeacherStudentPair.adjustedTeacherScoreName])
+                #print(maxes[theTeacherStudentPair.studentFractionalErrorName])
+                #print(mins[theTeacherStudentPair.studentFractionalErrorName])
                 plots.append(
                     self.createFractionalErrorScatter(
                         dataframe,
@@ -286,6 +305,7 @@ class createTeacherStudentPlotTask(createPlotTask):
                         mins[theTeacherStudentPair.studentFractionalErrorName],
                     )
                 )
+                #print("abs fractional error")
                 plots.append(
                     self.createAbsFractionalErrorScatter(
                         dataframe,
@@ -323,41 +343,56 @@ class createTeacherStudentPlotTask(createPlotTask):
 
         possibleMaxes = {}
         possibleMins = {}
+        #print("Calculating")
         for teacherStudentGroup in teacherStudentGroups:
+            #print("teacher scores")
             possibleMaxes[teacherStudentGroup.adjustedTeacherScoreName] = {}
             possibleMaxes[teacherStudentGroup.teacherModel.scoreName] = {}
             possibleMins[teacherStudentGroup.adjustedTeacherScoreName] = {}
             possibleMins[teacherStudentGroup.teacherModel.scoreName] = {}
             for sampleName in dataframes:
+                #print(sampleName)
                 theDataframe = dataframes[sampleName]
                 possibleMaxes[teacherStudentGroup.adjustedTeacherScoreName][sampleName] = theDataframe.Max(teacherStudentGroup.adjustedTeacherScoreName)
                 possibleMins[teacherStudentGroup.adjustedTeacherScoreName][sampleName] = theDataframe.Min(teacherStudentGroup.adjustedTeacherScoreName)
                 possibleMaxes[teacherStudentGroup.teacherModel.scoreName][sampleName] = theDataframe.Max(teacherStudentGroup.teacherModel.scoreName)
                 possibleMins[teacherStudentGroup.teacherModel.scoreName][sampleName] = theDataframe.Min(teacherStudentGroup.teacherModel.scoreName)
 
+            #print("teacher student pairs")
             for teacherStudentPair in teacherStudentGroup.teacherStudentPairs:
                 possibleMaxes[teacherStudentPair.studentScoreDeltaName] = {}
                 possibleMaxes[teacherStudentPair.absStudentScoreDeltaName] = {}
                 possibleMaxes[teacherStudentPair.studentModel.scoreName] = {}
+                possibleMaxes[teacherStudentPair.studentFractionalErrorName] = {}
+                possibleMaxes[teacherStudentPair.absStudentFractionalErrorName] = {}
                 possibleMins[teacherStudentPair.studentScoreDeltaName] = {}
                 possibleMins[teacherStudentPair.absStudentScoreDeltaName] = {}
                 possibleMins[teacherStudentPair.studentModel.scoreName] = {}
+                possibleMins[teacherStudentPair.studentFractionalErrorName] = {}
+                possibleMins[teacherStudentPair.absStudentFractionalErrorName] = {}
 
                 for sampleName in dataframes:
+                    #print(sampleName)
                     theDataframe = dataframes[sampleName]
+                    #print(teacherStudentPair.studentScoreDeltaName)
                     possibleMaxes[teacherStudentPair.studentScoreDeltaName][sampleName] = theDataframe.Max(teacherStudentPair.studentScoreDeltaName)
                     possibleMins[teacherStudentPair.studentScoreDeltaName][sampleName] = theDataframe.Min(teacherStudentPair.studentScoreDeltaName)
+                    #print(teacherStudentPair.absStudentScoreDeltaName)
                     possibleMaxes[teacherStudentPair.absStudentScoreDeltaName][sampleName] = theDataframe.Max(teacherStudentPair.absStudentScoreDeltaName)
                     possibleMins[teacherStudentPair.absStudentScoreDeltaName][sampleName] = theDataframe.Min(teacherStudentPair.absStudentScoreDeltaName)
+                    #print(teacherStudentPair.studentModel.scoreName)
                     possibleMaxes[teacherStudentPair.studentModel.scoreName][sampleName] = theDataframe.Max(teacherStudentPair.studentModel.scoreName)
                     possibleMins[teacherStudentPair.studentModel.scoreName][sampleName] = theDataframe.Min(teacherStudentPair.studentModel.scoreName)
                     
+                    #print(teacherStudentPair.studentFractionalErrorName)
                     possibleMaxes[teacherStudentPair.studentFractionalErrorName][sampleName] = theDataframe.Max(teacherStudentPair.studentFractionalErrorName)
                     possibleMins[teacherStudentPair.studentFractionalErrorName][sampleName] = theDataframe.Min(teacherStudentPair.studentFractionalErrorName)
+                    #print(teacherStudentPair.absStudentFractionalErrorName)
                     possibleMaxes[teacherStudentPair.absStudentFractionalErrorName][sampleName] = theDataframe.Max(teacherStudentPair.absStudentFractionalErrorName)
                     possibleMins[teacherStudentPair.absStudentFractionalErrorName][sampleName] = theDataframe.Min(teacherStudentPair.absStudentFractionalErrorName)
         #After the nightmare of booking all those result vectors, we calculate the
         # actual values we need to use
+        #print("Getting values")
         for teacherStudentGroup in teacherStudentGroups:
             for sampleName in dataframes:
                 possibleMaxes[teacherStudentGroup.adjustedTeacherScoreName][sampleName] = possibleMaxes[teacherStudentGroup.adjustedTeacherScoreName][sampleName].GetValue()
@@ -380,6 +415,7 @@ class createTeacherStudentPlotTask(createPlotTask):
                     possibleMins[teacherStudentPair.absStudentFractionalErrorName][sampleName] = possibleMins[teacherStudentPair.absStudentFractionalErrorName][sampleName].GetValue()
 
         #okay. Now we need to get the genuine maxes
+        #print("Genuine maxes")
         for teacherStudentGroup in teacherStudentGroups:
             overallMaxes[teacherStudentGroup.adjustedTeacherScoreName], overallMins[teacherStudentGroup.adjustedTeacherScoreName] = self.getMaxAndMinFromPossibles(possibleMaxes, possibleMins, teacherStudentGroup.adjustedTeacherScoreName)
             overallMaxes[teacherStudentGroup.teacherModel.scoreName], overallMins[teacherStudentGroup.teacherModel.scoreName] = self.getMaxAndMinFromPossibles(possibleMaxes, possibleMins, teacherStudentGroup.teacherModel.scoreName)
@@ -390,8 +426,15 @@ class createTeacherStudentPlotTask(createPlotTask):
 
                 overallMaxes[teacherStudentPair.studentFractionalErrorName], overallMins[teacherStudentPair.studentFractionalErrorName] = self.getMaxAndMinFromPossibles(possibleMaxes, possibleMins, teacherStudentPair.studentFractionalErrorName)
                 overallMaxes[teacherStudentPair.absStudentFractionalErrorName], overallMins[teacherStudentPair.absStudentFractionalErrorName] = self.getMaxAndMinFromPossibles(possibleMaxes, possibleMins, teacherStudentPair.absStudentFractionalErrorName)
-
+        self.weedOutBadNumbers(overallMaxes, overallMins)
         return overallMaxes, overallMins
+
+    def weedOutBadNumbers(self, maxes, mins):
+        for score in maxes:
+            if math.isnan(maxes[score]) or math.isinf(maxes[score]):
+                maxes[score] = 1000.0
+            if math.isnan(mins[score]) or math.isinf(mins[score]):
+                mins[score] = -50.0
 
     def getMaxAndMinFromPossibles(self, possibleMaxes, possibleMins, name):
         maxList = []
