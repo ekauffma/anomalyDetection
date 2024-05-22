@@ -12,7 +12,7 @@ import json
 
 RATE_VAL = 3.0 # kHz
 
-def main():
+def main(outfile):
 
     # load json containing CICADA rates
     f = open('paperCode/metadata/rateTables.json')
@@ -43,7 +43,7 @@ def main():
     max_vtx = 100.0
 
     # create file for zerobias hists
-    output_file = ROOT.TFile("hists_pileup_240514.root", "RECREATE")
+    output_file = ROOT.TFile(outfile, "RECREATE")
 
     # define towers to count for NTT4 (used as approximation of pileup)
     zero_bias = zero_bias.Define("goodTowers_et",
@@ -79,10 +79,12 @@ def main():
 
             # calculate efficiency
             total_integral = float(scoreHist.Integral())
+            print("    total integral = ", total_integral)
             partial_integral = float(scoreHist.Integral(int(idx), int(scoreHist.GetNbinsX())))
             if total_integral!=0:
                 uncertainty = np.sqrt(partial_integral)/total_integral
                 partial_integral = partial_integral/total_integral
+                print("    partial integral = ", partial_integral)
             else:
                 uncertainty = 0
                 partial_integral = 0
@@ -104,4 +106,13 @@ def main():
 
 if __name__ == "__main__":
 
-	main()
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        "-o",
+        "--outfile",
+        help="file to save histograms to")
+
+    args = parser.parse_args()
+
+    main(args.outfile)
