@@ -101,6 +101,7 @@ class drawSignalAdditionsPlotsTask(drawPlotTask):
                 1200,
                 500,
             )
+            theCanvas.SetLogx()
             theCanvas.SetRightMargin(0.33)
 
             #theLegend = ROOT.TLegend(0.6, 0.6, 0.9, 0.9)
@@ -132,7 +133,7 @@ class drawSignalAdditionsPlotsTask(drawPlotTask):
                     additionsGraph.Draw('P')
 
                 if index == 0:
-                    additionsGraph.GetHistogram().GetXaxis().SetTitle(score)
+                    additionsGraph.GetHistogram().GetXaxis().SetTitle(score+' Rate (kHz)')
                     additionsGraph.GetHistogram().GetYaxis().SetTitle("Percent added(%)")
                     additionsGraph.GetHistogram().SetTitle('')
                     primaryGraph = additionsGraph
