@@ -81,6 +81,7 @@ for date in sampleDates:
 # Add the SUEPS by hand
 # samplePaths["SUEP"] = "/hdfs/store/user/aloeliger/SUEP_Paper_Analysis/08Jan2024/"
 # samplePaths["SUEP"] = "/hdfs/store/user/aloeliger/SUEP_Paper_Analysis/05Feb2024/"
+samplePaths["SUEP"] = "/hdfs/store/user/aloeliger/SUEP_Paper_Analysis/25Apr2024/"
 
 treeNames = [
     'l1EventTree/L1EventTree',
@@ -156,6 +157,7 @@ reducedSampleNames = [
     "SUSYGluGluToBBHToBB_NarrowWidth_M-350_TuneCP5_13p6TeV-pythia8",
     "VBFHToInvisible_M-125_TuneCP5_13p6TeV_powheg-pythia8",
     "TT_TuneCP5_13p6TeV_powheg-pythia8",
+    "SUEP",
 ]
 
 reducedSamples = dict(
