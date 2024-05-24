@@ -11,6 +11,7 @@ from anomalyDetection.paperCode.plottingTasks.drawSignalAdditionsPlotsTask impor
 from anomalyDetection.paperCode.plottingTasks.drawCICADAPurityContentsPlotsTask import drawCICADAPurityContentsPlotsTask
 from anomalyDetection.paperCode.plottingTasks.drawCICADATurnOnCurveTask import drawCICADATurnOnCurveTask
 from anomalyDetection.paperCode.plottingTasks.drawObjectCorrelationPlotsTask import drawObjectCorrelationPlotsTask
+from anomalyDetection.paperCode.plottingTasks.drawObjectControlPlotsTask import drawObjectControlPlotsTask
 
 
 console = Console()
@@ -83,6 +84,12 @@ def main(args):
             'objects': '/nfs_scratch/aloeliger/PaperPlotFiles/PlotFiles/CICADAObjectPlots.root'
         }
     )
+    theDrawObjectControlPlotsTask = drawObjectControlPlotsTask(
+        taskName = 'Draw Object Control Plots',
+        dictOfFiles = {
+            'controls': '/nfs_scratch/aloeliger/PaperPlotFiles/PlotFiles/CICADAObjectControlPlots.root'
+        }
+    )
 
     allTasks = [
         theDrawScorePlotsTask,
@@ -92,6 +99,7 @@ def main(args):
         thePurityContentsTask,
         theTurnOnCurveTask,
         theDrawObjectCorrelationTask,
+        theDrawObjectControlPlotsTask,
     ]
 
     drawPlots(allTasks)
