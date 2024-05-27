@@ -40,15 +40,15 @@ def main(outfile):
 
     # minimum and maximum number of vertices for histogram
     min_vtx = 0.0
-    max_vtx = 100.0
+    max_vtx = 50.0
 
     # create file for zerobias hists
     output_file = ROOT.TFile(outfile, "RECREATE")
 
     # define towers to count for NTT4 (used as approximation of pileup)
-    zero_bias = zero_bias.Define("goodTowers_et",
-                                 "et[abs(eta) <= 4]",
-                                 {"L1CaloTower/et", "L1CaloTower/eta"})
+    zero_bias = zero_bias.Define("goodTowers_iet",
+                                 "iet[abs(ieta) <= 4]",
+                                 {"L1CaloTower/iet", "L1CaloTower/ieta"})
 
     # create and fill CICADA score histograms for zerobias
     for i in range(len(cicada_names)):
@@ -68,13 +68,19 @@ def main(outfile):
         )
 
         rateHist = ROOT.TH1F(f"rateHist_{cicada_names[i]}", ";nPV;Rate [kHz]", int(max_vtx-min_vtx), int(min_vtx), int(max_vtx))
+        ntt4Hist = ROOT.TH1F(f"ntt4", "NTT4", int(max_vtx-min_vtx), int(min_vtx), int(max_vtx))
+
+        df =
+
 
         for j in range(int(min_vtx), int(max_vtx)):
 
             print("    nPV = ", j)
 
+
+
             # filter zerobias for current pileup (NTT4) and create score hist
-            zero_bias_current = zero_bias.Filter(f"Sum(goodTowers_et>0.5)=={j}")
+            zero_bias_current = zero_bias.Filter(f"Sum(goodTowers_iet>1)=={j}") # place holder value. want et>0.5
             scoreHist = zero_bias_current.Histo1D(scoreHistModel, f"{cicada_names[i]}_score")
 
             # calculate efficiency
