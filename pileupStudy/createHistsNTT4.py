@@ -9,26 +9,18 @@ import argparse
 import numpy as np
 from paperSampleBuilder import samples
 import json
+import awkward as ak
 
 RATE_VAL = 3.0 # kHz
 
 def main(outfile):
 
-    # load json containing CICADA rates
-    f = open('paperCode/metadata/rateTables.json')
-    rateTables = json.load(f)
-
-    # get list of sample names and remove ZeroBias
-    sample_names = list(samples.keys())
-    if 'ZeroBias' in sample_names:
-        sample_names.remove('ZeroBias')
-
     # get zerobias and filter out training events
     zero_bias = samples['ZeroBias'].getNewDataframe(["l1CaloTowerTree/L1CaloTowerTree"])
 
-    branches = ["iet", "ieta", "iphi"]
-    data = {branch: zero_bias.AsNumpy([branch])[branch] for branch in branches}
-    ak_array = ak.Array(data)
+    branches = ["L1CaloTower.iet", "L1CaloTower.ieta", "L1CaloTower.iphi"]
+
+    ak_array = ak.from_rdataframe(zero_bias, columns=branches)
 
     # minimum and maximum number of vertices for histogram
     min_vtx = 0.0
@@ -37,10 +29,10 @@ def main(outfile):
     # create file for zerobias hists
     output_file = ROOT.TFile(outfile, "RECREATE")
 
-    ak_array = ak_array[(abs(ak_array["ieta"])<=4)]
-    ak_array = ak_array.drop(["ieta", "iphi"], axis=1)
+    ak_array = ak_array[(abs(ak_array["L1CaloTower.ieta"])<=4)]
+    ak_array = ak_array.drop(["L1CaloTower.ieta", "L1CaloTower.iphi"], axis=1)
     ak_array = ak_array.groupby(["event"]).count()
-    ak_array = ak_array.rename(columns={"iet": "ntt4"})
+    ak_array = ak_array.rename(columns={"L1CaloTower.iet": "ntt4"})
     ak_array["ntt4"] /= 5
     ak_array["ntt4"] = ak_array["ntt4"].round()
     ak_array["ntt4"] = ak_array["ntt4"].clip(upper=32)
