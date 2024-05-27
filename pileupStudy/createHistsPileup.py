@@ -68,10 +68,6 @@ def main(outfile):
         )
 
         rateHist = ROOT.TH1F(f"rateHist_{cicada_names[i]}", ";nPV;Rate [kHz]", int(max_vtx-min_vtx), int(min_vtx), int(max_vtx))
-        ntt4Hist = ROOT.TH1F(f"ntt4", "NTT4", int(max_vtx-min_vtx), int(min_vtx), int(max_vtx))
-
-        df =
-
 
         for j in range(int(min_vtx), int(max_vtx)):
 
