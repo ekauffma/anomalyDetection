@@ -4,9 +4,31 @@
 ## make score and rate histograms for CICADA                          ##
 ########################################################################
 
-import ROOT
 import argparse
 import numpy as np
+
+from coffea import processor
+from coffea.nanoevents.schemas.base import BaseSchema
+
+class MyProcessor(processor.ProcessorABC):
+    def __init__(self):
+        pass
+
+    def process(self, events):
+        l1calotowers = ak.zip(
+            {
+                "iet": events.L1CaloTower.iet,
+                "ieta": events.L1CaloTower.ieta,
+                "iphi": events.L1CaloTower.iphi,
+            }
+        )
+
+class MySchema(BaseSchema):
+    def __init__(self, base_form):
+        super().__init__(base_form)
+        self._form["contents"] = self._build_collections(self._form["contents"])
+
+    def _build_collections(self, branch_forms):
 
 def main(nBins):
 
