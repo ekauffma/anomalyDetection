@@ -9,48 +9,44 @@ import argparse
 import numpy as np
 from paperSampleBuilder import samples
 import json
-import awkward as ak
 
 RATE_VAL = 3.0 # kHz
 
 def main(outfile):
 
     # get zerobias and filter out training events
-    zero_bias = samples['ZeroBias'].getNewDataframe(["l1CaloTowerTree/L1CaloTowerTree"])
-
-    branches = ["L1CaloTower.iet", "L1CaloTower.ieta", "L1CaloTower.iphi"]
-
-    ak_array = ak.from_rdataframe(zero_bias, columns=branches)
+    zero_bias = samples['ZeroBias'].getNewDataframe()
 
     # minimum and maximum number of vertices for histogram
     min_vtx = 0.0
     max_vtx = 50.0
 
-    # create file for zerobias hists
+    # create ROOT file for hists
     output_file = ROOT.TFile(outfile, "RECREATE")
 
-    ak_array = ak_array[(abs(ak_array["L1CaloTower.ieta"])<=4)]
-    ak_array = ak_array.drop(["L1CaloTower.ieta", "L1CaloTower.iphi"], axis=1)
-    ak_array = ak_array.groupby(["event"]).count()
-    ak_array = ak_array.rename(columns={"L1CaloTower.iet": "ntt4"})
-    ak_array["ntt4"] /= 5
-    ak_array["ntt4"] = ak_array["ntt4"].round()
-    ak_array["ntt4"] = ak_array["ntt4"].clip(upper=32)
+    # define towers to count for NTT4 (used as approximation of pileup)
+    zero_bias = zero_bias.Define("goodTowers_iet",
+                                 "iet[abs(ieta) <= 4]",
+                                 {"L1CaloTower/iet", "L1CaloTower/ieta"})
 
-    histModel = ROOT.RDF.TH1DModel(
-        "ntt4",
-        "NTT4",
-        int(max_vtx-min_vtx),
-        int(min_vtx),
-        int(max_vtx)
-    )
-    ntt4Hist = df.Histo1D(histModel, "NTT4")
-    ntt4Hist.Write()
+    hist = ROOT.TH1F("NTT4", "NTT4", int(max_vtx-min_vtx), min_vtx/5, max_vtx/5)
+
+    for j in range(int(min_vtx), int(max_vtx)):
+
+        print("    nPV = ", j)
+
+
+        # filter zerobias for current pileup (NTT4) and count events
+        current_count = zero_bias.Filter(f"Sum(goodTowers_iet>1)=={j}").Count().GetValue()
+        print("        current_count = ", current_count)
+
+        # add to histogram
+        hist.SetBinContent(j+1, current_count)
+
+    hist.Write()
 
     output_file.Write()
     output_file.Close()
-
-    f.close()
 
 if __name__ == "__main__":
 
