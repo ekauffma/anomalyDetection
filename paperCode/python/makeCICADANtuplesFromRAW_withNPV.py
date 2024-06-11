@@ -103,8 +103,16 @@ from L1Trigger.L1TNtuples.customiseL1Ntuple import L1NtupleRAWEMU
 process = L1NtupleRAWEMU(process)
 
 from anomalyDetection.paperCode.PUVertexNtuplizer_cfi import PUVertexNtuplizer
+from anomalyDetection.paperCode.L1RegionNtuplizer_cfi import L1RegionNtuplizer
+from anomalyDetection.paperCode.puppiJetNtuplizer_cfi import puppiJetNtuplizer
 process.PUVertexNtuplizer = PUVertexNtuplizer
-process.customNtuplePath = cms.Path(process.PUVertexNtuplizer)
+process.puppiJetNtuplizer = puppiJetNtuplizer
+process.L1RegionNtuplizer = L1RegionNtuplizer
+process.customNtuplePath = cms.Path(process.L1RegionNtuplizer +
+                                    process.puppiJetNtuplizer +
+                                    process.PUVertexNtuplizer)
+
+process.schedule.append(process.customNtuplePath)
 
 process.load('L1Trigger.L1TCaloLayer1.L1TCaloSummaryCICADAv1p1p0')
 process.load('L1Trigger.L1TCaloLayer1.L1TCaloSummaryCICADAv2p1p0')
@@ -217,7 +225,6 @@ process.NtuplePath = cms.Path(
 )
 
 process.schedule.append(process.NtuplePath)
-process.schedule.append(process.customNtuplePath)
 
 process.TFileService.fileName = cms.string(options.outputFile)
 
