@@ -4,13 +4,19 @@ from Configuration.Eras.Era_Run3_2023_cff import Run3_2023
 
 import FWCore.ParameterSet.VarParsing as VarParsing
 options = VarParsing.VarParsing('analysis')
-options.register(
-    'isData',
-    False,
-    VarParsing.VarParsing.multiplicity.singleton,
-    VarParsing.VarParsing.varType.bool,
-    "Use data configuration options or not",
-)
+options.register('primaryInputFile',
+                 "/store/data/Run2023E/ZeroBias/MINIAOD/PromptReco-v1/000/372/474/00000/1269ca8a-74bd-4cd5-8c01-02b2fa51b246.root",
+                 VarParsing.VarParsing.multiplicity.singleton,
+                 VarParsing.VarParsing.varType.string,
+                 "primary input file path (miniaod)"
+                 )
+options.register('secondaryInputFile',
+                 "/store/data/Run2023E/ZeroBias/MINIAOD/PromptReco-v1/000/372/474/00000/1269ca8a-74bd-4cd5-8c01-02b2fa51b246.root",
+                 VarParsing.VarParsing.multiplicity.singleton,
+                 VarParsing.VarParsing.varType.string,
+                 "secondary input file path (raw)"
+                 )
+
 options.parseArguments()
 
 process = cms.Process("NTUPLIZE",Run3_2023)
@@ -41,8 +47,8 @@ process.MessageLogger.suppressWarning = cms.untracked.vstring(
 )
 
 process.source = cms.Source("PoolSource",
-                            fileNames = cms.untracked.vstring("/store/data/Run2023E/ZeroBias/MINIAOD/PromptReco-v1/000/372/474/00000/1269ca8a-74bd-4cd5-8c01-02b2fa51b246.root"),
-                            secondaryFileNames = cms.untracked.vstring("/store/data/Run2023E/ZeroBias/RAW/v1/000/372/474/00000/4ee9f316-c6b7-4e9f-9151-6f6d12bf63cd.root")
+                            fileNames = cms.untracked.vstring(options.primaryInputFile),
+                            secondaryFileNames = cms.untracked.vstring(options.secondaryInputFile)
 )
 
 process.options = cms.untracked.PSet(
@@ -75,12 +81,12 @@ process.options = cms.untracked.PSet(
 )
 
 from Configuration.AlCa.GlobalTag import GlobalTag
-if options.isData:
-    print("Treating config as data.")
-    process.GlobalTag = GlobalTag(process.GlobalTag, '130X_dataRun3_Prompt_v4', '')
-else:
-    print("Treating config as simulation.")
-    process.GlobalTag = GlobalTag(process.GlobalTag, '130X_mcRun3_2023_realistic_postBPix_v2', '')
+#if options.isData:
+print("Treating config as data.")
+process.GlobalTag = GlobalTag(process.GlobalTag, '130X_dataRun3_Prompt_v4', '')
+#else:
+#    print("Treating config as simulation.")
+#    process.GlobalTag = GlobalTag(process.GlobalTag, '130X_mcRun3_2023_realistic_postBPix_v2', '')
 
 process.raw2digi_step = cms.Path(process.RawToDigi)
 process.endjob_step = cms.EndPath(process.endOfProcess)

@@ -16,7 +16,7 @@ config.JobType.pluginName = 'Analysis'
 config.JobType.outputFiles = ['out_hist.root']
 config.Data.outLFNDirBase = '/store/user/ekauffma'
 
-config.JobType.maxMemoryMB = 4000
+config.JobType.maxMemoryMB = 2500
 
 
 config.Data.inputDataset = '/ZeroBias/Run2023E-PromptReco-v1/MINIAOD'
